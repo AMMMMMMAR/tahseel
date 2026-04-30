@@ -22,8 +22,8 @@
      ▼
  Supabase PostgreSQL              ← stores clients, bonds, agent logs
      │
-     ▼ (daily at 08:00 via cron)
- LangGraph AI Agent               ← reads DB → analyzes risk → acts
+     ▼ (daily at 08:00 via cron or manually via UI)
+ LangGraph AI Agent (Gemini)      ← reads DB → analyzes risk → acts
      │
      ├── analyze_risk()           → updates risk scores per client
      ├── send_reminder()          → sends personalized emails via Resend
@@ -42,7 +42,9 @@ tahseeI/
 ├── main.py                 # FastAPI entry point
 ├── database.py             # Supabase client + DB helper functions
 ├── cron_job.py             # Daily scheduler (runs agent at 08:00)
-├── streamlit_app.py        # Testing dashboard UI
+├── test_agent.py           # Script to run agent manually
+│
+├── frontend/               # Next.js 16 UI (Dashboard, Logs, Upload)
 │
 ├── ocr/
 │   ├── __init__.py
@@ -50,7 +52,8 @@ tahseeI/
 │
 ├── api/
 │   ├── __init__.py
-│   └── bonds.py            # FastAPI router (/api/bonds, /api/bonds/upload)
+│   ├── bonds.py            # FastAPI router (/api/bonds, /api/bonds/ocr)
+│   └── agent.py            # FastAPI router (/api/agent/run, /api/agent/logs)
 │
 └── agent/
     ├── __init__.py
@@ -82,22 +85,16 @@ cp .env.example .env     # Mac/Linux
 Edit `.env`:
 
 ```env
-# Gemini — for OCR (image → JSON)
+# Gemini — for OCR (image → JSON) AND LangGraph AI Agent
 GEMINI_API_KEY=AIzaSy...
 
 # Supabase — for database storage
 SUPABASE_URL=https://<your-project-id>.supabase.co
 SUPABASE_KEY=<your-service-role-key>
 
-# OpenAI — for the LangGraph AI Agent
-OPENAI_API_KEY=sk-...
-
 # Resend — for sending reminder emails
 RESEND_API_KEY=re_...
 FROM_EMAIL=collections@yourcompany.com
-
-# Shown in the Streamlit sidebar
-COMPANY_NAME=شركة الأمل للتجارة
 ```
 
 > **Where to get each key:**
@@ -105,7 +102,6 @@ COMPANY_NAME=شركة الأمل للتجارة
 > |-----|--------|
 > | `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) |
 > | `SUPABASE_URL` / `SUPABASE_KEY` | Supabase → Project Settings → API |
-> | `OPENAI_API_KEY` | [platform.openai.com](https://platform.openai.com) |
 > | `RESEND_API_KEY` | [resend.com](https://resend.com) |
 
 ---
@@ -159,56 +155,44 @@ CREATE TABLE agent_actions (
 
 ## 🚀 Running the Project
 
-### Option A — Testing Dashboard (Streamlit)
+### Option A — Testing Dashboard (Next.js)
 
-```bash
-streamlit run streamlit_app.py
-```
+Open two terminals:
 
-Opens at **http://localhost:8501** — use this to:
-- Upload bond images and test OCR extraction
-- View clients and bonds from the database
-- Manually trigger the AI Agent
-- Generate and download daily reports
-
-### Option B — FastAPI Server
-
+**Terminal 1 (Backend):**
 ```bash
 uvicorn main:app --reload
 ```
+Runs at **http://localhost:8000**. Check API docs at `/docs`.
 
-Opens at **http://localhost:8000/docs** — interactive API documentation.
+**Terminal 2 (Frontend):**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Opens at **http://localhost:3000** — The professional web dashboard!
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/bonds/upload` | `POST` | Upload bond image → OCR → save to DB |
-| `/api/bonds` | `POST` | Send pre-processed OCR JSON directly |
-| `/api/bonds` | `GET` | List all bonds (optional `?status=overdue`) |
-| `/health` | `GET` | Server health check |
-
-### Option C — Daily Cron Job
+### Option B — Daily Cron Job
 
 ```bash
 python cron_job.py
 ```
 
-Runs the AI Agent every day at **08:00**. Deploy this on Railway, Render, or any always-on server.
+Runs the AI Agent every day at **08:00**.
 
 ---
 
 ## 🧪 Testing Flow (Step by Step)
 
 ```
-1. Start Streamlit:     streamlit run streamlit_app.py
-2. Go to:               "رفع السندات" tab
-3. Upload:              A photo of an Arabic bond/invoice
-4. Click:               "استخراج البيانات بـ Gemini"
-5. Review & edit:       The extracted JSON fields
-6. Click:               "حفظ السند في قاعدة البيانات"
-7. Verify:              Go to "الفواتير" tab — bond should appear
-8. Verify:              Go to "العملاء" tab — client should appear
-9. Test Agent:          Go to "AI Agent" tab → run individual tools
-10. Test Report:        Go to "التقارير" tab → generate daily report
+1. Start Backend & Frontend
+2. Go to:               http://localhost:3000
+3. Upload Bond:         Click "+ رفع سند جديد" and upload an Arabic bond/invoice.
+4. OCR & Save:          Review the extracted JSON from Gemini and click Save.
+5. Verify:              Go back to Dashboard, see the new bond and updated metrics.
+6. Trigger Agent:       Click "🤖 تشغيل الوكيل الذكي" in the top bar.
+7. Agent Logs:          Navigate to "نشاط الوكيل (Logs)" to see the explainable AI timeline (risk analysis, warnings, and emails sent).
 ```
 
 ---
@@ -280,9 +264,9 @@ risk_score = min(
 | `supabase` | PostgreSQL database client |
 | `google-genai` | Gemini 2.5 Flash for OCR |
 | `langgraph` | AI Agent orchestration |
-| `langchain-openai` | GPT-4o-mini for agent decisions |
+| `langchain-google-genai`| Gemini 2.5 Flash for agent decisions |
 | `resend` | Transactional email sending |
-| `streamlit` | Testing dashboard UI |
+| `next.js` (frontend) | Production web dashboard |
 | `python-dotenv` | Environment variable loading |
 
 ---

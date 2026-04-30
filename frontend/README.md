@@ -55,6 +55,7 @@ frontend/
 │   │   │   ├── bonds/          # الفواتير والسندات
 │   │   │   ├── upload/         # رفع سند جديد
 │   │   │   ├── reports/        # التقارير
+│   │   │   ├── agent-logs/     # نشاط الوكيل الذكي (AI Agent Logs)
 │   │   │   └── settings/       # الإعدادات
 │   │   ├── globals.css         # design tokens + RTL
 │   │   └── layout.tsx          # الجذر (HTML, خط Cairo, providers)
@@ -82,7 +83,9 @@ frontend/
 | `GET  /health`               | يُستخدم في صفحة الإعدادات للفحص    |
 | `GET  /api/bonds`            | لوحة التحكم، السندات، العملاء، التقارير |
 | `POST /api/bonds`            | حفظ سند من JSON يدويًا             |
-| `POST /api/bonds/upload`     | رفع صورة → OCR → حفظ مباشر          |
+| `POST /api/bonds/ocr`        | رفع صورة → OCR فقط دون الحفظ التلقائي |
+| `POST /api/agent/run`        | تشغيل الوكيل الذكي يدوياً          |
+| `GET  /api/agent/logs`       | جلب سجل النشاطات الخاص بالوكيل     |
 
 كل الطلبات تمرّ عبر `src/lib/api.ts` بنوعٍ آمن ومعالجة أخطاء موحّدة (`ApiError`).
 
