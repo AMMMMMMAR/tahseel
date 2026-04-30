@@ -10,5 +10,4 @@ pydantic
 schedule
 google-genai
 Pillow
-streamlit
 python-multipart
