@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from api.bonds import router
+from api.bonds import router as bonds_router
+from api.agent import router as agent_router
 
 app = FastAPI(
     title="Tahseel API — نظام تحصيل الديون الذكي",
@@ -22,7 +23,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router)
+app.include_router(bonds_router)
+app.include_router(agent_router)
 
 
 @app.get("/health", tags=["system"])

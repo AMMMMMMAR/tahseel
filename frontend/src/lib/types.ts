@@ -49,6 +49,14 @@ export interface UploadBondResponse extends CreateBondResponse {
   ocr_data: OcrBondPayload;
 }
 
+export interface AgentRunResponse {
+  success: boolean;
+  reminders_sent: number;
+  report: Record<string, any>;
+  message: string;
+}
+
+
 export interface HealthResponse {
   status: string;
   service: string;

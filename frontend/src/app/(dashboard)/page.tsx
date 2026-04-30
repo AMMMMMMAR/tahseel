@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import {
@@ -11,17 +12,39 @@ import {
 import { DecisionCard } from "@/components/dashboard/DecisionCard";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { LoadingState, ErrorState, EmptyState } from "@/components/ui/States";
 import { useBonds } from "@/hooks/useBonds";
+import { api } from "@/lib/api";
 import { getPriorityBonds, summarizeBonds } from "@/lib/bonds";
 import { formatNumberAr } from "@/lib/utils";
 import { toast } from "@/components/providers/ToastProvider";
 import type { Bond } from "@/lib/types";
 
 export default function DashboardPage() {
+  const queryClient = useQueryClient();
   const { data, isLoading, isError, error, refetch } = useBonds({
     status: "all",
     limit: 100,
+  });
+
+  const agentMutation = useMutation({
+    mutationFn: () => api.runAgent(),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ["bonds"] });
+      toast({
+        tone: "success",
+        title: "اكتملت دورة الوكيل بنجاح",
+        description: `تم تحديث المخاطر وإرسال ${res.reminders_sent} تذكيرات.`,
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        tone: "error",
+        title: "فشل تشغيل الوكيل",
+        description: err.detail || err.message || "حدث خطأ غير معروف",
+      });
+    },
   });
 
   const summary = useMemo(
@@ -66,12 +89,23 @@ export default function DashboardPage() {
         title="لوحة التحكم"
         subtitle={lastUpdate ? `آخر تحديث: ${lastUpdate}` : undefined}
         action={
-          <Link
-            href="/upload"
-            className="rounded-[5px] bg-[var(--color-brand)] px-4 py-3 text-[13px] font-semibold text-white hover:bg-[#2563eb]"
-          >
-            + رفع سند جديد
-          </Link>
+          <div className="flex items-center gap-[10px]">
+            <Button
+              variant="outline"
+              size="md"
+              onClick={() => agentMutation.mutate()}
+              disabled={agentMutation.isPending}
+              className="bg-[var(--color-bg-card)] text-[var(--color-fg)] border-[var(--color-border)] hover:bg-[var(--color-bg-card-soft)]"
+            >
+              {agentMutation.isPending ? "الوكيل يعمل..." : "🤖 تشغيل الوكيل الذكي"}
+            </Button>
+            <Link
+              href="/upload"
+              className="rounded-[5px] bg-[var(--color-brand)] px-4 py-[9px] text-[13px] font-semibold text-white hover:bg-[#2563eb]"
+            >
+              + رفع سند جديد
+            </Link>
+          </div>
         }
       />
 

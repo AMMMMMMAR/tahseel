@@ -6,6 +6,7 @@ import type {
   ListBondsResponse,
   OcrBondPayload,
   UploadBondResponse,
+  AgentRunResponse,
 } from "./types";
 
 export interface OcrOnlyResponse {
@@ -112,6 +113,13 @@ export const api = {
     return request<OcrOnlyResponse>("/api/bonds/ocr", {
       method: "POST",
       body: form,
+    });
+  },
+
+  // Runs the AI Agent manually
+  runAgent: () => {
+    return request<AgentRunResponse>("/api/agent/run", {
+      method: "POST",
     });
   },
 };
