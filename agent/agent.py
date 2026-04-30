@@ -2,11 +2,12 @@
 # Main LangGraph Agent — runs the full daily collection cycle
 
 from langgraph.graph import StateGraph, END
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.schema import HumanMessage, SystemMessage
 from typing import TypedDict, Annotated
 from datetime import date
 import operator
+import os
 
 from agent.tools import (
     analyze_and_update_risks,
@@ -26,10 +27,11 @@ class AgentState(TypedDict):
     step: str
 
 
-# ── LLM — GPT-4o-mini with all tools bound ───────────────────────────────────
+# ── LLM — Gemini 2.5 Flash with all tools bound ───────────────────────────────
 
-llm = ChatOpenAI(
-    model="gpt-4o-mini",
+llm = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash",
+    api_key=os.getenv("GEMINI_API_KEY", ""),
     temperature=0
 ).bind_tools([
     analyze_and_update_risks,
