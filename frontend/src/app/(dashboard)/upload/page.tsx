@@ -44,11 +44,10 @@ export default function UploadPage() {
   const queryClient = useQueryClient();
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) => api.uploadBondImage(file),
+    mutationFn: (file: File) => api.extractBondOcr(file),
     onSuccess: (res) => {
       setForm({ ...EMPTY_FORM, ...res.ocr_data });
       setExtracted(true);
-      queryClient.invalidateQueries({ queryKey: ["bonds"] });
       toast({
         tone: "success",
         title: "تمّ استخراج بيانات السند بنجاح",

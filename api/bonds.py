@@ -42,11 +42,27 @@ async def receive_ocr_result(data: OCRResult):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@router.post("/bonds/ocr", summary="استخراج البيانات من الصورة فقط — بدون حفظ")
+async def extract_only(file: UploadFile = File(...)):
+    """
+    Runs Gemini OCR on the uploaded image and returns the extracted JSON.
+    Does NOT save to Supabase — saving happens separately via POST /api/bonds.
+    """
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="الملف يجب أن يكون صورة (JPG/PNG)")
+    try:
+        image_bytes = await file.read()
+        suffix = ".png" if "png" in file.content_type else ".jpg"
+        ocr_data = extract_bond_from_bytes(image_bytes, suffix)
+        return {"success": True, "ocr_data": ocr_data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/bonds/upload", summary="رفع صورة — OCR + حفظ في خطوة واحدة")
 async def upload_and_process(file: UploadFile = File(...)):
     """
     Accepts a bond image, runs Gemini OCR, and saves to Supabase in one step.
-    Use this as the primary endpoint for the full pipeline.
     """
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="الملف يجب أن يكون صورة (JPG/PNG)")

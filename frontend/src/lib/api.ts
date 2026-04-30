@@ -8,6 +8,11 @@ import type {
   UploadBondResponse,
 } from "./types";
 
+export interface OcrOnlyResponse {
+  success: boolean;
+  ocr_data: OcrBondPayload;
+}
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
   "http://localhost:8000";
@@ -95,6 +100,16 @@ export const api = {
     const form = new FormData();
     form.append("file", file);
     return request<UploadBondResponse>("/api/bonds/upload", {
+      method: "POST",
+      body: form,
+    });
+  },
+
+  // OCR only — extracts data from image WITHOUT saving to Supabase
+  extractBondOcr: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return request<OcrOnlyResponse>("/api/bonds/ocr", {
       method: "POST",
       body: form,
     });
