@@ -34,3 +34,22 @@ async def trigger_agent():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/logs", summary="جلب سجل نشاطات الوكيل الذكي")
+async def get_agent_logs(limit: int = 50):
+    """
+    Fetches the history of actions taken by the AI Agent (e.g., sent reminders).
+    Joins with bonds and clients to show full context.
+    """
+    from database import supabase
+    try:
+        # Fetch actions and join with bonds to get the bond details, and nested clients for client names
+        result = supabase.table("agent_actions") \
+            .select("*, bonds(bond_number, amount, clients(name))") \
+            .order("executed_at", desc=True) \
+            .limit(limit) \
+            .execute()
+        
+        return {"success": True, "logs": result.data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

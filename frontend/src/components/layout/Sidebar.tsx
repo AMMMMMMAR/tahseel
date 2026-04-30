@@ -9,6 +9,7 @@ const navItems: Array<{ href: string; label: string }> = [
   { href: "/customers", label: "العملاء" },
   { href: "/bonds", label: "الفواتير" },
   { href: "/reports", label: "التقارير" },
+  { href: "/agent-logs", label: "نشاط الوكيل (Logs)" },
   { href: "/settings", label: "الإعدادات" },
 ];
 

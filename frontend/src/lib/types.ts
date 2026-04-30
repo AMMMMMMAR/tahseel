@@ -56,6 +56,30 @@ export interface AgentRunResponse {
   message: string;
 }
 
+export interface AgentLog {
+  id: string;
+  executed_at: string;
+  bond_id: string;
+  action_type: string;
+  details: {
+    to: string;
+    tone: string;
+    days_overdue: number;
+  };
+  bonds?: {
+    bond_number: string;
+    amount: number;
+    clients?: {
+      name: string;
+    };
+  };
+}
+
+export interface AgentLogsResponse {
+  success: boolean;
+  logs: AgentLog[];
+}
+
 
 export interface HealthResponse {
   status: string;
