@@ -137,12 +137,18 @@ def send_smart_reminder(
 فريق المحاسبة""".strip()
 
     try:
-        resend.Emails.send({
-            "from": FROM_EMAIL,
-            "to": client_email,
-            "subject": f"تذكير — مبلغ {amount:,.0f} ريال",
-            "text": message_body
-        })
+        # Simulation Mode if no Resend API key
+        if not resend.api_key or resend.api_key.strip() == "":
+            print(f"\n[Simulation] 📧 محاكاة إرسال بريد إلى {client_email}")
+            print(f"[Simulation] الموضوع: تذكير — مبلغ {amount:,.0f} ريال")
+            print(f"[Simulation] المحتوى:\n{message_body}\n")
+        else:
+            resend.Emails.send({
+                "from": FROM_EMAIL,
+                "to": client_email,
+                "subject": f"تذكير — مبلغ {amount:,.0f} ريال",
+                "text": message_body
+            })
 
         # Log the action
         supabase.table("agent_actions").insert({
