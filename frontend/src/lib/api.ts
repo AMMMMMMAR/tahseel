@@ -7,6 +7,7 @@ import type {
   OcrBondPayload,
   UploadBondResponse,
   AgentRunResponse,
+  AgentLogsResponse,
 } from "./types";
 
 export interface OcrOnlyResponse {
@@ -121,6 +122,11 @@ export const api = {
     return request<AgentRunResponse>("/api/agent/run", {
       method: "POST",
     });
+  },
+
+  // Fetch agent logs
+  getAgentLogs: (limit: number = 50) => {
+    return request<AgentLogsResponse>(`/api/agent/logs?limit=${limit}`);
   },
 };
 

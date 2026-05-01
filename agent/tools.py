@@ -68,6 +68,15 @@ def analyze_and_update_risks() -> str:
 
         updated_count += 1
 
+    # Log the action
+    supabase.table("agent_actions").insert({
+        "action_type": "analyze_risks",
+        "details": {
+            "updated_count": updated_count,
+            "message": f"تم تقييم وتحديث درجات المخاطر لـ {updated_count} سند/فاتورة."
+        }
+    }).execute()
+
     return f"تم تحديث {updated_count} سند. اكتملت مرحلة تحليل المخاطر."
 
 
@@ -103,6 +112,16 @@ def get_high_risk_bonds(threshold: float = 70.0) -> str:
             "days_overdue": bond["days_overdue"],
             "description": bond["description"]
         })
+
+    # Log the action
+    supabase.table("agent_actions").insert({
+        "action_type": "find_high_risk",
+        "details": {
+            "high_risk_count": len(filtered),
+            "threshold": threshold,
+            "message": f"تم اكتشاف {len(filtered)} حالات ذات مخاطر عالية تتطلب تدخلاً."
+        }
+    }).execute()
 
     return json.dumps(summary, ensure_ascii=False)
 
@@ -232,5 +251,11 @@ def generate_daily_report() -> str:
         "عدد_السندات_النشطة": len(active.data),
         "عدد_المتأخرة": len([b for b in active.data if b["status"] == "overdue"])
     }
+
+    # Log the action
+    supabase.table("agent_actions").insert({
+        "action_type": "daily_report_generated",
+        "details": report
+    }).execute()
 
     return json.dumps(report, ensure_ascii=False, indent=2)
