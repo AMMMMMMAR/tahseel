@@ -40,3 +40,10 @@ temp/
 # ── OS ────────────────────────────────────────────────────────────────────────
 .DS_Store
 desktop.ini
+
+# ── Node / Next.js (defensive, in case subprojects miss it) ──────────────────
+node_modules/
+.next/
+out/
+.turbo/
+.tmp-*

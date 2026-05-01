@@ -4,10 +4,18 @@
 from langchain.tools import tool
 from database import supabase
 from datetime import date, datetime
-import resend, os, json
+import resend, os, json, re
 
 resend.api_key = os.getenv("RESEND_API_KEY", "")
 FROM_EMAIL = os.getenv("FROM_EMAIL", "collections@yourcompany.com")
+
+# Basic RFC-5322-ish check; we don't need to be perfect, just to skip
+# obviously empty / malformed addresses before hitting the Resend API.
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+
+def _is_valid_email(value: str | None) -> bool:
+    return bool(value) and bool(_EMAIL_RE.match(value.strip()))
 
 
 @tool
@@ -155,40 +163,61 @@ def send_smart_reminder(
 مع تحياتنا،
 فريق المحاسبة""".strip()
 
-    try:
-        # Simulation Mode if no Resend API key
-        if not resend.api_key or resend.api_key.strip() == "":
-            print(f"\n[Simulation] 📧 محاكاة إرسال بريد إلى {client_email}")
-            print(f"[Simulation] الموضوع: تذكير — مبلغ {amount:,.0f} ريال")
-            print(f"[Simulation] المحتوى:\n{message_body}\n")
-        else:
-            resend.Emails.send({
+    if not _is_valid_email(client_email):
+        return (
+            f"تم تخطي العميل {client_name}: عنوان البريد الإلكتروني "
+            f"غير صالح أو فارغ ({client_email!r})."
+        )
+
+    simulation = not resend.api_key or resend.api_key.strip() == ""
+    email_id: str | None = None
+
+    if simulation:
+        print(f"\n[Simulation] محاكاة إرسال بريد إلى {client_email}")
+        print(f"[Simulation] الموضوع: تذكير — مبلغ {amount:,.0f} ريال")
+        print(f"[Simulation] المحتوى:\n{message_body}\n")
+    else:
+        try:
+            response = resend.Emails.send({
                 "from": FROM_EMAIL,
                 "to": client_email,
                 "subject": f"تذكير — مبلغ {amount:,.0f} ريال",
-                "text": message_body
+                "text": message_body,
             })
+        except Exception as e:
+            return f"فشل الإرسال عبر Resend: {str(e)}"
 
-        # Log the action
+        email_id = (response or {}).get("id") if isinstance(response, dict) else getattr(response, "id", None)
+        if not email_id:
+            return f"فشل الإرسال عبر Resend: استجابة غير متوقعة ({response!r})."
+
+    try:
         supabase.table("agent_actions").insert({
             "bond_id": bond_id,
-            "action_type": "reminder_sent",
+            "action_type": "reminder_simulated" if simulation else "reminder_sent",
             "details": {
                 "to": client_email,
                 "tone": tone,
-                "days_overdue": days_overdue
-            }
+                "days_overdue": days_overdue,
+                "resend_id": email_id,
+            },
         }).execute()
 
-        # Update last reminder timestamp on bond
-        supabase.table("bonds").update({
-            "last_reminder_at": datetime.now().isoformat()
-        }).eq("id", bond_id).execute()
-
-        return f"تم إرسال التذكير لـ {client_name} ({client_email})"
-
+        if not simulation:
+            supabase.table("bonds").update({
+                "last_reminder_at": datetime.now().isoformat()
+            }).eq("id", bond_id).execute()
     except Exception as e:
-        return f"فشل الإرسال: {str(e)}"
+        if simulation:
+            return f"تمت محاكاة التذكير لكن فشل تسجيل الإجراء: {str(e)}"
+        return (
+            f"تم إرسال التذكير لـ {client_name} ({client_email}) "
+            f"لكن فشل تسجيل الإجراء في قاعدة البيانات: {str(e)}"
+        )
+
+    if simulation:
+        return f"تمت محاكاة التذكير لـ {client_name} ({client_email}) — لا يوجد مفتاح Resend."
+    return f"تم إرسال التذكير لـ {client_name} ({client_email})."
 
 
 @tool
