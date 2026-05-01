@@ -1,5 +1,5 @@
-# main.py
-# FastAPI application entry point
+# api/index.py
+# FastAPI application entry point for Vercel
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
