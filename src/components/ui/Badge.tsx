@@ -1,7 +1,16 @@
 import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
-export type BadgeTone = "high" | "medium" | "low" | "success" | "neutral";
+export type BadgeTone =
+  | "high"
+  | "medium"
+  | "low"
+  | "success"
+  | "neutral"
+  | "brand"
+  | "danger"
+  | "warning"
+  | "info";
 
 const toneClasses: Record<BadgeTone, string> = {
   high: "bg-[var(--color-danger)] text-[var(--color-danger-soft)]",
@@ -9,6 +18,10 @@ const toneClasses: Record<BadgeTone, string> = {
   low: "bg-[var(--color-info)] text-[var(--color-success-soft)]",
   success: "bg-[var(--color-success)] text-white",
   neutral: "bg-[var(--color-bg-action)] text-[var(--color-fg-subtle)]",
+  brand: "bg-[var(--color-brand)] text-white",
+  danger: "bg-[var(--color-danger)] text-[var(--color-danger-soft)]",
+  warning: "bg-[var(--color-warn)] text-white",
+  info: "bg-[var(--color-info)] text-[var(--color-success-soft)]",
 };
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {

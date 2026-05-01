@@ -61,11 +61,7 @@ export interface AgentLog {
   executed_at: string;
   bond_id: string;
   action_type: string;
-  details: {
-    to: string;
-    tone: string;
-    days_overdue: number;
-  };
+  details: Record<string, any> | null;
   bonds?: {
     bond_number: string;
     amount: number;

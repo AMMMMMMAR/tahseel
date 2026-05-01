@@ -35,28 +35,33 @@
 ## 📁 Project Structure
 
 ```
-tahseeI/
-├── .env                    # 🔐 Secret keys (never commit)
-├── .env.example            # Template for new team members
-├── requirements.txt        # All Python dependencies
-├── main.py                 # FastAPI entry point
+tahseel/
+├── .env                    # 🔐 Backend secret keys (never commit)
+├── .env.local              # 🔐 Frontend env (NEXT_PUBLIC_*) — never commit
+├── .env.local.example      # Template for frontend env
+├── requirements.txt        # Python dependencies (used by Vercel python runtime)
+├── package.json            # Next.js dependencies (frontend at repo root)
+├── next.config.ts          # Next.js config
+├── vercel.json             # Vercel monorepo routing (Next.js + FastAPI)
 ├── database.py             # Supabase client + DB helper functions
-├── cron_job.py             # Daily scheduler (runs agent at 08:00)
-├── test_agent.py           # Script to run agent manually
+├── cron_job.py             # Optional daily scheduler (08:00)
 │
-├── frontend/               # Next.js 16 UI (Dashboard, Logs, Upload)
+├── src/                    # Next.js 16 App Router (frontend)
+│   ├── app/                # Routes, layouts, dashboard pages
+│   ├── components/         # UI + dashboard + layout components
+│   ├── hooks/              # React Query hooks
+│   └── lib/                # API client, types, utils
+├── public/                 # Next.js static assets
+│
+├── api/                    # FastAPI app (Vercel Python serverless)
+│   ├── index.py            # Entry point exposed as `app`
+│   ├── bonds.py            # /api/bonds, /api/bonds/upload, /api/bonds/ocr
+│   └── agent.py            # /api/agent/run, /api/agent/logs
 │
 ├── ocr/
-│   ├── __init__.py
 │   └── ocr_model.py        # Gemini OCR — image → Arabic JSON
 │
-├── api/
-│   ├── __init__.py
-│   ├── bonds.py            # FastAPI router (/api/bonds, /api/bonds/ocr)
-│   └── agent.py            # FastAPI router (/api/agent/run, /api/agent/logs)
-│
 └── agent/
-    ├── __init__.py
     ├── agent.py            # LangGraph StateGraph orchestrator
     └── tools.py            # 4 agent tools (analyze, remind, report, query)
 ```
@@ -75,14 +80,7 @@ pip install -r requirements.txt
 
 ### 2. Environment Variables
 
-Copy the example file and fill in your keys:
-
-```bash
-copy .env.example .env   # Windows
-cp .env.example .env     # Mac/Linux
-```
-
-Edit `.env`:
+Backend (`.env` at repo root):
 
 ```env
 # Gemini — for OCR (image → JSON) AND LangGraph AI Agent
@@ -95,6 +93,17 @@ SUPABASE_KEY=<your-service-role-key>
 # Resend — for sending reminder emails
 RESEND_API_KEY=re_...
 FROM_EMAIL=collections@yourcompany.com
+```
+
+Frontend (`.env.local` at repo root, copy from `.env.local.example`):
+
+```env
+# Leave empty in production — calls become same-origin (/api/*) on Vercel.
+# Locally, point at the FastAPI dev server.
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+NEXT_PUBLIC_COMPANY_NAME=شركة الأمل للتجارة
+NEXT_PUBLIC_USER_NAME=عمر عبدالله
+NEXT_PUBLIC_USER_ROLE=مدير التحصيل
 ```
 
 > **Where to get each key:**
@@ -155,25 +164,30 @@ CREATE TABLE agent_actions (
 
 ## 🚀 Running the Project
 
-### Option A — Testing Dashboard (Next.js)
+### Local Development (two terminals)
 
-Open two terminals:
-
-**Terminal 1 (Backend):**
+**Terminal 1 — Backend (FastAPI):**
 ```bash
-uvicorn main:app --reload
+uvicorn api.index:app --reload
 ```
 Runs at **http://localhost:8000**. Check API docs at `/docs`.
 
-**Terminal 2 (Frontend):**
+**Terminal 2 — Frontend (Next.js):**
 ```bash
-cd frontend
 npm install
 npm run dev
 ```
-Opens at **http://localhost:3000** — The professional web dashboard!
+Opens at **http://localhost:3000** — the professional web dashboard.
 
-### Option B — Daily Cron Job
+### Production (Vercel)
+
+A single Vercel project deploys the whole repo:
+- `/` and any non-API path → Next.js frontend.
+- `/api/*`, `/health`, `/docs`, `/openapi.json` → FastAPI (Python serverless via `api/index.py`).
+
+Routing is defined in `vercel.json`. Set the same secret keys (`GEMINI_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`, `RESEND_API_KEY`, `FROM_EMAIL`) in **Project → Settings → Environment Variables**. Leave `NEXT_PUBLIC_API_BASE_URL` empty (or unset) in production so calls stay same-origin.
+
+### Optional — Daily Cron Job
 
 ```bash
 python cron_job.py

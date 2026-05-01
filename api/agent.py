@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-import sys, os
+import sys, os, traceback
 
 # Ensure root is on path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -33,6 +33,7 @@ async def trigger_agent():
             "message": "تم تشغيل الوكيل الذكي واكتملت الدورة بنجاح"
         }
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/logs", summary="جلب سجل نشاطات الوكيل الذكي")
@@ -52,4 +53,5 @@ async def get_agent_logs(limit: int = 50):
         
         return {"success": True, "logs": result.data}
     except Exception as e:
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))

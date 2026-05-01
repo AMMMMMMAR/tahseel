@@ -16,8 +16,8 @@ export interface OcrOnlyResponse {
 }
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ||
-  "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
+  (process.env.NODE_ENV === "production" ? "" : "http://localhost:8000");
 
 export class ApiError extends Error {
   status: number;
@@ -47,8 +47,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     });
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);
+    const target = API_BASE_URL || "نفس النطاق";
     throw new ApiError(
-      `تعذّر الاتصال بالخادم على ${API_BASE_URL}. تحقّق من تشغيل واجهة Tahseel API.`,
+      `تعذّر الاتصال بالخادم على ${target}. تحقّق من تشغيل واجهة Tahseel API.`,
       0,
       reason === "Failed to fetch" ? undefined : reason
     );

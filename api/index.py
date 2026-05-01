@@ -30,12 +30,3 @@ app.include_router(agent_router)
 @app.get("/health", tags=["system"])
 def health():
     return {"status": "ok", "service": "Tahseel API"}
-
-
-@app.get("/", tags=["system"])
-def root():
-    return {
-        "message": "مرحباً بك في Tahseel API",
-        "docs": "/docs",
-        "endpoints": ["/api/bonds", "/api/bonds/upload"]
-    }
