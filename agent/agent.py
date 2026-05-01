@@ -82,16 +82,29 @@ def execute_tools(state: AgentState) -> AgentState:
 
     last_message = state["messages"][-1]
     tool_results = []
+    reminders_delta = 0
 
     for tool_call in last_message.tool_calls:
         tool_name = tool_call["name"]
         tool_args = tool_call["args"]
         result = tool_map[tool_name].invoke(tool_args)
+
+        # Count only reminders that were actually delivered through Resend.
+        # `send_smart_reminder` returns a string starting with "تم إرسال التذكير"
+        # on real success, with separate prefixes for simulation, validation
+        # failures, and Resend errors.
+        if tool_name == "send_smart_reminder" and isinstance(result, str) \
+                and result.startswith("تم إرسال التذكير"):
+            reminders_delta += 1
+
         tool_results.append(
             ToolMessage(content=str(result), tool_call_id=tool_call["id"])
         )
 
-    return {"messages": tool_results}
+    update: dict = {"messages": tool_results}
+    if reminders_delta:
+        update["reminders_sent"] = state.get("reminders_sent", 0) + reminders_delta
+    return update
 
 
 # ── Graph Builder ──────────────────────────────────────────────────────────────
