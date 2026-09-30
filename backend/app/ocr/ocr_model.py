@@ -2,13 +2,14 @@
 # Production-ready OCR — accepts file path, returns structured Arabic JSON
 # No Google Colab dependency
 
-import os
 import json
-from PIL import Image
+import os
+
+from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from PIL import Image
 from pydantic import BaseModel, Field
-from dotenv import load_dotenv
 
 load_dotenv()
 

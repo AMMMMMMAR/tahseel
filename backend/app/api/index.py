@@ -1,14 +1,14 @@
 # api/index.py
 # FastAPI application entry point for Vercel
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 
 load_dotenv()
 
-from api.bonds import router as bonds_router
 from api.agent import router as agent_router
+from api.bonds import router as bonds_router
 
 app = FastAPI(
     title="Tahseel API — نظام تحصيل الديون الذكي",

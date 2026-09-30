@@ -1,9 +1,11 @@
 # api/bonds.py
 # FastAPI router — receives OCR results and stores them in Supabase
 
-from fastapi import APIRouter, HTTPException, UploadFile, File
+import os
+import sys
+
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
-import sys, os
 
 # Ensure root is on path when running from uvicorn
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))

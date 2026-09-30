@@ -42,9 +42,10 @@ CREATE TABLE agent_actions (
 );
 """
 
-from supabase import create_client
 import os
+
 from dotenv import load_dotenv
+from supabase import create_client
 
 load_dotenv()
 

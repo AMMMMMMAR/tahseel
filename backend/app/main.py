@@ -1,12 +1,11 @@
-import os
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 
 load_dotenv()
 
-from app.api.bonds import router as bonds_router
 from app.api.agent import router as agent_router
+from app.api.bonds import router as bonds_router
 
 app = FastAPI(
     title="Tahseel API — نظام تحصيل الديون الذكي",

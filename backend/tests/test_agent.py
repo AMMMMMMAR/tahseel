@@ -1,5 +1,5 @@
+
 from dotenv import load_dotenv
-import os
 
 # Ensure environment variables are loaded
 load_dotenv()
@@ -14,7 +14,6 @@ try:
     result = run_daily_agent()
     print("\n✅ اكتملت دورة الوكيل الذكي بنجاح!")
     print("النتائج:")
-    import json
     # Print the report from the state if available
     for msg in result.get("messages", []):
         if hasattr(msg, "content") and "تاريخ_التقرير" in msg.content:

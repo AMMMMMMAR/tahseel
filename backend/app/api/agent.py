@@ -1,5 +1,7 @@
+import os
+import sys
+
 from fastapi import APIRouter, HTTPException
-import sys, os
 
 # Ensure root is on path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
@@ -26,9 +28,9 @@ async def trigger_agent():
                 try:
                     import json
                     report = json.loads(msg.content)
-                except:
+                except Exception:
                     pass
-                    
+
         return {
             "success": True,
             "reminders_sent": result.get("reminders_sent", 0),
@@ -52,7 +54,7 @@ async def get_agent_logs(limit: int = 50):
             .order("executed_at", desc=True) \
             .limit(limit) \
             .execute()
-        
+
         return {"success": True, "logs": result.data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

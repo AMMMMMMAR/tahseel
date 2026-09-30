@@ -2,12 +2,17 @@
 # All LangGraph tools the Agent can call
 
 from langchain.tools import tool
+
 try:
     from app.database import supabase
 except ImportError:
     from database import supabase
+import json
+import os
+import re
 from datetime import date, datetime
-import resend, os, json, re
+
+import resend
 
 resend.api_key = os.getenv("RESEND_API_KEY", "")
 FROM_EMAIL = os.getenv("FROM_EMAIL", "collections@yourcompany.com")
