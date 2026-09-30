@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-cairo), "Noto Sans Arabic", system-ui, sans-serif;
+
+  --color-bg: #0e0e10;
+  --color-bg-sidebar: #141418;
+  --color-bg-card: #000000;
+  --color-bg-card-soft: #1c1c20;
+  --color-bg-row: #0f0f0f;
+  --color-bg-action: #282a2f;
+  --color-border: #26262c;
+
+  --color-fg: #ffffff;
+  --color-fg-muted: #c7c7d1;
+  --color-fg-subtle: #9999a6;
+  --color-fg-faint: #6b6b75;
+  --color-fg-soft: #ebebf0;
+
+  --color-brand: #3b82f6;
+  --color-brand-soft: #60a5fa;
+
+  --color-danger: #a70006;
+  --color-danger-strong: #e30008;
+  --color-danger-bright: #ef4444;
+  --color-danger-soft: #fecaca;
+
+  --color-warn: #be9800;
+  --color-info: #0055bd;
+  --color-success: #22c55e;
+  --color-success-soft: #bbf7d0;
+  --color-orange: #f97316;
+  --color-avatar: #465064;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html[dir="rtl"],
+html[dir="rtl"] body {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select {
+  text-align: right;
+}
+
+input[type="date"],
+input[type="number"] {
+  font-feature-settings: "tnum";
+}
+
+::selection {
+  background: var(--color-brand);
+  color: white;
+}
+
+/* Number tabular figures for KPIs */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom thin scrollbar */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #26262c;
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #3a3a45;
+}

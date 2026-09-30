@@ -1,0 +1,57 @@
+# ── Secrets & Environment ───────────────────────────────────────────────
+.env
+.env*.local
+*.pem
+*.key
+
+# ── Python & Pytest ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ── Database & Storage ────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+data/
+backend/data/
+
+# ── Virtual Environments ──────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Node / Next.js ────────────────────────────────────────────────────
+node_modules/
+frontend/node_modules/
+.next/
+frontend/.next/
+out/
+.turbo/
+
+# ── IDE & Editor ──────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Temp & Logs ───────────────────────────────────────────────────────
+*.tmp
+*.log
+uploads/
+temp/
