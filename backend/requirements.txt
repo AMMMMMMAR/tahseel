@@ -11,3 +11,4 @@ schedule
 google-genai
 Pillow
 python-multipart
+sqlmodel>=0.0.16

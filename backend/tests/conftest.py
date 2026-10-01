@@ -16,10 +16,18 @@ os.environ["FROM_EMAIL"] = "test@tahseel.local"
 
 from fastapi.testclient import TestClient
 
+from app.core.db import init_db
 from app.main import app
+
+
+@pytest.fixture(autouse=True)
+def setup_test_database():
+    """Ensure database tables are initialized before tests."""
+    init_db()
 
 
 @pytest.fixture
 def client():
-    """Provides a synchronous TestClient for testing FastAPI routes."""
-    return TestClient(app)
+    """Provides a synchronous TestClient for testing FastAPI routes with lifespan."""
+    with TestClient(app) as test_client:
+        yield test_client
