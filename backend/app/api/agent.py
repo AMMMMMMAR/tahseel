@@ -1,60 +1,93 @@
-import os
-import sys
+import json
+import logging
+from typing import Any, Dict, List
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from sqlmodel import Session
 
-# Ensure root is on path
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+from app.agent.agent import run_daily_cycle
+from app.core.db import get_session
+from app.models.bond import Bond
+from app.models.client import Client
+from app.repositories.action_repo import ActionRepository
 
-try:
-    from app.agent.agent import run_daily_agent
-except ImportError:
-    from agent.agent import run_daily_agent
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/agent", tags=["agent"])
 
+
 @router.post("/run", summary="تشغيل الوكيل الذكي يدوياً")
-async def trigger_agent():
+async def trigger_agent() -> Dict[str, Any]:
     """
-    Manually triggers the LangGraph AI Agent to run the daily collection cycle.
-    Returns the generated report and number of reminders sent.
+    Manually triggers the autonomous LangGraph Collection Agent.
+    Emits real-time progress events over WebSocket at `/ws/agent`
+    and returns final execution state and portfolio report.
     """
     try:
-        result = run_daily_agent()
-        report = {}
-        # Extract the report from the agent messages if available
-        for msg in result.get("messages", []):
-            if hasattr(msg, "content") and "تاريخ_التقرير" in msg.content:
-                try:
-                    import json
-                    report = json.loads(msg.content)
-                except Exception:
-                    pass
+        result = run_daily_cycle()
+        if result.get("error"):
+            raise HTTPException(status_code=500, detail=result["error"])
 
         return {
             "success": True,
-            "reminders_sent": result.get("reminders_sent", 0),
-            "report": report,
-            "message": "تم تشغيل الوكيل الذكي واكتملت الدورة بنجاح"
+            "session_id": result.get("session_id"),
+            "reminders_sent": len(result.get("actions_dispatched", [])),
+            "report": result.get("report", {}),
+            "logs": result.get("logs", []),
+            "message": "تم تشغيل الوكيل الذكي واكتملت الدورة بنجاح",
         }
+    except HTTPException:
+        raise
     except Exception as e:
+        logger.error(f"Error executing agent: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/logs", summary="جلب سجل نشاطات الوكيل الذكي")
-async def get_agent_logs(limit: int = 50):
-    """
-    Fetches the history of actions taken by the AI Agent (e.g., sent reminders).
-    Joins with bonds and clients to show full context.
-    """
-    from database import supabase
-    try:
-        # Fetch actions and join with bonds to get the bond details, and nested clients for client names
-        result = supabase.table("agent_actions") \
-            .select("*, bonds(bond_number, amount, clients(name))") \
-            .order("executed_at", desc=True) \
-            .limit(limit) \
-            .execute()
 
-        return {"success": True, "logs": result.data}
+@router.get("/logs", summary="جلب سجل نشاطات الوكيل الذكي")
+def get_agent_logs(
+    limit: int = 50,
+    session: Session = Depends(get_session)
+) -> Dict[str, Any]:
+    """
+    Fetches the history of actions taken by the AI Agent from SQLite.
+    Includes details, debtor names, and bond numbers.
+    """
+    try:
+        actions = ActionRepository.list_actions(session=session, limit=limit)
+        formatted_logs: List[Dict[str, Any]] = []
+
+        for action in actions:
+            # Parse JSON details safely
+            details_dict = {}
+            if action.details:
+                try:
+                    details_dict = json.loads(action.details) if isinstance(action.details, str) else action.details
+                except Exception:
+                    details_dict = {"raw": action.details}
+
+            bond_number = None
+            client_name = None
+
+            if action.bond_id:
+                bond = session.get(Bond, action.bond_id)
+                if bond:
+                    bond_number = bond.bond_number
+                    if bond.client_id:
+                        client = session.get(Client, bond.client_id)
+                        if client:
+                            client_name = client.name
+
+            formatted_logs.append({
+                "id": action.id,
+                "action_type": action.action_type,
+                "bond_id": action.bond_id,
+                "bond_number": bond_number,
+                "client_name": client_name,
+                "details": details_dict,
+                "executed_at": action.executed_at.isoformat() if action.executed_at else None,
+            })
+
+        return {"success": True, "logs": formatted_logs}
     except Exception as e:
+        logger.error(f"Error fetching agent logs: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))

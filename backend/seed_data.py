@@ -9,6 +9,7 @@ if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from sqlmodel import Session, select
+
 from app.core.db import engine, init_db
 from app.models.bond import Bond
 from app.models.client import Client

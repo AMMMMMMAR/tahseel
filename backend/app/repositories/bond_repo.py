@@ -49,6 +49,28 @@ class BondRepository:
         return list(session.exec(statement).all())
 
     @staticmethod
+    def list_active_bonds(session: Session) -> List[Bond]:
+        """Lists all bonds that are active (pending, reminded, or overdue)."""
+        statement = select(Bond).where(
+            Bond.status.in_(["pending", "reminded", "overdue"])  # type: ignore
+        ).order_by(Bond.created_at.desc())
+        return list(session.exec(statement).all())
+
+    @staticmethod
+    def record_reminder(session: Session, bond_id: str) -> Optional[Bond]:
+        """Updates last reminder timestamp and sets status to reminded if currently pending."""
+        from datetime import datetime, timezone
+        bond = session.get(Bond, bond_id)
+        if bond:
+            bond.last_reminder_at = datetime.now(timezone.utc)
+            if bond.status == "pending":
+                bond.status = "reminded"
+            session.add(bond)
+            session.commit()
+            session.refresh(bond)
+        return bond
+
+    @staticmethod
     def update_bond_status(
         session: Session,
         bond_id: str,

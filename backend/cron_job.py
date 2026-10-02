@@ -1,8 +1,9 @@
 # cron_job.py
 # Runs the AI Agent daily at 08:00 — deploy on Railway or Render
 
-import schedule
 import time
+
+import schedule
 from dotenv import load_dotenv
 
 load_dotenv()

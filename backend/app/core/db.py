@@ -1,4 +1,5 @@
 import os
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Generator
 
@@ -28,6 +29,11 @@ engine = create_engine(
 )
 
 
+def get_engine():
+    """Returns the SQLModel engine instance."""
+    return engine
+
+
 def init_db() -> None:
     """Creates all database tables based on SQLModel definitions."""
     import app.models  # noqa: F401
@@ -35,6 +41,13 @@ def init_db() -> None:
 
 
 def get_session() -> Generator[Session, None, None]:
-    """Dependency for yielding database sessions."""
+    """Dependency for yielding database sessions in FastAPI routes."""
+    with Session(engine) as session:
+        yield session
+
+
+@contextmanager
+def get_db_session() -> Generator[Session, None, None]:
+    """Context manager for yielding database sessions in standalone scripts and agent nodes."""
     with Session(engine) as session:
         yield session
