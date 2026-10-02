@@ -5,14 +5,15 @@ from pydantic import BaseModel
 from sqlmodel import Session
 
 from app.core.db import get_session
-from app.ocr.ocr_model import extract_bond_from_bytes
 from app.repositories.bond_repo import BondRepository
+from app.services.ocr_service import OCRService
 
 router = APIRouter(prefix="/api", tags=["bonds"])
 
 
 class OCRResult(BaseModel):
-    """Pre-processed OCR JSON — Arabic field names matching BondData schema."""
+    """Pre-processed OCR JSON — Arabic field names matching legacy schema."""
+
     رقم_السند: str
     تاريخ_الاصدار: str
     اسم_العميل: str
@@ -20,6 +21,17 @@ class OCRResult(BaseModel):
     ايميل_العميل: str = ""
     وصف_سبب_الصرف: str = ""
     المبلغ: str
+
+
+def _validate_document_mime(content_type: Optional[str]) -> str:
+    """Validates that uploaded file is an image or PDF."""
+    mime = (content_type or "image/jpeg").lower()
+    if not (mime.startswith("image/") or "pdf" in mime):
+        raise HTTPException(
+            status_code=400,
+            detail="نوع الملف غير مدعوم. يرجى رفع صورة (JPG/PNG/WEBP) أو ملف PDF."
+        )
+    return mime
 
 
 @router.post("/bonds", summary="استقبال JSON من OCR وحفظ السند")
@@ -41,43 +53,43 @@ async def receive_ocr_result(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/bonds/ocr", summary="استخراج البيانات من الصورة فقط — بدون حفظ")
+@router.post("/bonds/ocr", summary="استخراج البيانات من المستند (صورة أو PDF) — بدون حفظ")
 async def extract_only(file: UploadFile = File(...)):
     """
-    Runs Gemini OCR on the uploaded image and returns the extracted JSON.
+    Runs Gemini 2.5 Flash Multi-Modal OCR on uploaded image or PDF and returns structured data.
     Does NOT save to the database — saving happens separately via POST /api/bonds.
     """
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="الملف يجب أن يكون صورة (JPG/PNG)")
+    mime = _validate_document_mime(file.content_type)
     try:
-        image_bytes = await file.read()
-        suffix = ".png" if "png" in file.content_type else ".jpg"
-        ocr_data = extract_bond_from_bytes(image_bytes, suffix)
-        return {"success": True, "ocr_data": ocr_data}
+        file_bytes = await file.read()
+        extraction = OCRService.extract_from_bytes(file_bytes, mime)
+        return {
+            "success": True,
+            "extraction": extraction.model_dump(),
+            "ocr_data": extraction.to_legacy_arabic_dict(),
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/bonds/upload", summary="رفع صورة — OCR + حفظ في خطوة واحدة")
+@router.post("/bonds/upload", summary="رفع مستند — OCR + حفظ في خطوة واحدة")
 async def upload_and_process(
     file: UploadFile = File(...),
     session: Session = Depends(get_session)
 ):
     """
-    Accepts a bond image, runs Gemini OCR, and saves to the database in one step.
+    Accepts a bond image or PDF, runs Gemini OCR, and saves directly to the database.
     """
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="الملف يجب أن يكون صورة (JPG/PNG)")
-
+    mime = _validate_document_mime(file.content_type)
     try:
-        image_bytes = await file.read()
-        suffix = ".png" if "png" in file.content_type else ".jpg"
-        ocr_data = extract_bond_from_bytes(image_bytes, suffix)
-        saved = BondRepository.save_bond_from_ocr(session, ocr_data)
+        file_bytes = await file.read()
+        saved = OCRService.extract_and_save(session, file_bytes, mime)
+        extraction = OCRService.extract_from_bytes(file_bytes, mime)
         return {
             "success": True,
             "bond_id": saved.id,
-            "ocr_data": ocr_data,
+            "extraction": extraction.model_dump(),
+            "ocr_data": extraction.to_legacy_arabic_dict(),
             "message": "تم استخراج البيانات وحفظ السند بنجاح"
         }
     except Exception as e:
