@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import {
@@ -10,12 +10,13 @@ import {
   PriorityTableSkeleton,
 } from "@/components/dashboard/PriorityTable";
 import { DecisionCard } from "@/components/dashboard/DecisionCard";
+import { LiveAgentTrace } from "@/components/dashboard/LiveAgentTrace";
+import { MobileSimulator } from "@/components/dashboard/MobileSimulator";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { LoadingState, ErrorState, EmptyState } from "@/components/ui/States";
 import { useBonds } from "@/hooks/useBonds";
-import { api } from "@/lib/api";
+import { useAgentWebSocket } from "@/hooks/useAgentWebSocket";
 import { getPriorityBonds, summarizeBonds } from "@/lib/bonds";
 import { formatNumberAr } from "@/lib/utils";
 import { toast } from "@/components/providers/ToastProvider";
@@ -28,24 +29,35 @@ export default function DashboardPage() {
     limit: 100,
   });
 
-  const agentMutation = useMutation({
-    mutationFn: () => api.runAgent(),
-    onSuccess: (res) => {
+  const {
+    status: wsStatus,
+    events,
+    currentStep,
+    latestReminder,
+    isRunning: isAgentRunning,
+    triggerRun,
+    clearLogs,
+  } = useAgentWebSocket();
+
+  const handleRunAgent = async () => {
+    try {
+      await triggerRun();
       queryClient.invalidateQueries({ queryKey: ["bonds"] });
       toast({
         tone: "success",
-        title: "اكتملت دورة الوكيل بنجاح",
-        description: `تم تحديث المخاطر وإرسال ${res.reminders_sent} تذكيرات.`,
+        title: "اكتملت دورة التحصيل الذاتية",
+        description: "تم تحديث درجات المخاطر وبث التنبيهات وإصدار التقرير بنجاح.",
       });
-    },
-    onError: (err: Error & { detail?: string }) => {
+    } catch (err: unknown) {
+      const errorMsg =
+        err instanceof Error ? err.message : "تعذر تشغيل الوكيل الذكي.";
       toast({
         tone: "error",
-        title: "فشل تشغيل الوكيل",
-        description: err.detail || err.message || "حدث خطأ غير معروف",
+        title: "خطأ أثناء تشغيل الوكيل",
+        description: errorMsg,
       });
-    },
-  });
+    }
+  };
 
   const summary = useMemo(
     () => summarizeBonds(data?.bonds ?? []),
@@ -79,37 +91,29 @@ export default function DashboardPage() {
     toast({
       tone: "info",
       title: `تم تسجيل القرار للعميل ${bond.clients?.name ?? ""}`,
-      description: "سيتم تنفيذ الإجراء عبر الوكيل الذكي خلال الدقائق القادمة.",
+      description: "سيتم تطبيق إجراء التصعيد عبر الوكيل الذكي في الدورة القادمة.",
     });
   };
 
   return (
-    <>
+    <div className="flex flex-col gap-6">
       <PageHeader
-        title="لوحة التحكم"
-        subtitle={lastUpdate ? `آخر تحديث: ${lastUpdate}` : undefined}
+        title="مركز قيادة تحصيل الديون الذكي"
+        subtitle={lastUpdate ? `تحديث البيانات: ${lastUpdate}` : undefined}
         action={
-          <div className="flex items-center gap-[10px]">
-            <Button
-              variant="outline"
-              size="md"
-              onClick={() => agentMutation.mutate()}
-              disabled={agentMutation.isPending}
-              className="bg-[var(--color-bg-card)] text-[var(--color-fg)] border-[var(--color-border)] hover:bg-[var(--color-bg-card-soft)]"
-            >
-              {agentMutation.isPending ? "الوكيل يعمل..." : "🤖 تشغيل الوكيل الذكي"}
-            </Button>
+          <div className="flex items-center gap-3">
             <Link
               href="/upload"
-              className="rounded-[5px] bg-[var(--color-brand)] px-4 py-[9px] text-[13px] font-semibold text-white hover:bg-[#2563eb]"
+              className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 shadow-md shadow-blue-600/20 transition"
             >
-              + رفع سند جديد
+              + فحص سند جديد (OCR)
             </Link>
           </div>
         }
       />
 
-      <section className="grid grid-cols-1 gap-[14px] sm:grid-cols-2 lg:grid-cols-4">
+      {/* KPI Stats Row */}
+      <section className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="إجمالي المستحقات"
           value={formatNumberAr(summary.totalReceivables)}
@@ -127,45 +131,98 @@ export default function DashboardPage() {
           label="المحصّل هذا الشهر"
           value={formatNumberAr(summary.collectedThisMonth)}
           unit="ر.س"
-          caption="إجمالي السندات المسوّاة هذا الشهر"
+          caption="إجمالي السندات المسوّاة بنجاح"
           tone="success"
         />
         <KpiCard
           label="متوسط دورة التحصيل"
           value={formatNumberAr(summary.avgCycleDays)}
           unit="يوم"
-          caption="تحسّن مستمر منذ تفعيل الوكيل"
+          caption="معدل استرداد قياسي عبر الوكيل الذكي"
           tone="success"
         />
       </section>
 
-      {isLoading ? (
-        <PriorityTableSkeleton />
-      ) : isError ? (
-        <Card className="p-4">
-          <ErrorState
-            title="تعذّر تحميل قائمة الأولوية"
-            description={error?.detail || error?.message}
-            onRetry={() => refetch()}
+      {/* Split-Screen Interactive Command Center: Live Trace + Mobile Simulator */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
+        {/* Left Column: Live Agent Trace Terminal (7 or 8 cols) */}
+        <div className="xl:col-span-8 flex flex-col gap-5">
+          <LiveAgentTrace
+            status={wsStatus}
+            events={events}
+            currentStep={currentStep}
+            isRunning={isAgentRunning}
+            onTriggerRun={handleRunAgent}
+            onClearLogs={clearLogs}
           />
-        </Card>
-      ) : (
-        <PriorityTable bonds={priority} />
-      )}
 
-      <section className="flex flex-col gap-[14px]">
-        <div className="flex min-h-[56px] flex-wrap items-center justify-between gap-3">
+          {/* Priority Debtor Matrix Table */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-white">
+                  أولويات المتابعة العاجلة
+                </h3>
+                <p className="text-xs text-[#8f8f9d]">
+                  السندات الأعلى خطورة التي تخضع لمستويات التصعيد من 1 إلى 4
+                </p>
+              </div>
+              <Link
+                href="/bonds"
+                className="text-xs text-blue-400 hover:text-blue-300 font-medium"
+              >
+                عرض كل السندات ←
+              </Link>
+            </div>
+
+            {isLoading ? (
+              <PriorityTableSkeleton />
+            ) : isError ? (
+              <Card className="p-4">
+                <ErrorState
+                  title="تعذّر تحميل قائمة الأولوية"
+                  description={error?.detail || error?.message}
+                  onRetry={() => refetch()}
+                />
+              </Card>
+            ) : (
+              <PriorityTable bonds={priority} />
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Real-Time Mobile Simulator (4 cols) */}
+        <div className="xl:col-span-4 flex flex-col items-center">
+          <div className="w-full mb-3 text-center sm:text-start">
+            <h3 className="text-base font-bold text-white flex items-center justify-center sm:justify-start gap-2">
+              <span>محاكي تجربة المدين</span>
+              <Badge tone="success" pill>
+                تفاعل حي
+              </Badge>
+            </h3>
+            <p className="text-xs text-[#8f8f9d]">
+              استقبال رسائل التذكير التفاعلية والردود السريعة لحظياً عبر واتساب
+            </p>
+          </div>
+
+          <MobileSimulator latestReminder={latestReminder} />
+        </div>
+      </section>
+
+      {/* Recommended Decisions Section */}
+      <section className="flex flex-col gap-3.5 pt-4 border-t border-[#1f1f24]">
+        <div className="flex min-h-[40px] flex-wrap items-center justify-between gap-3">
           <div className="flex flex-col gap-[2px] text-start">
-            <h2 className="text-[18px] font-bold text-[var(--color-fg)]">
-              قرارات اليوم المقترحة
-            </h2>
-            <p className="text-[12px] text-[var(--color-fg-subtle)]">
-              {`${formatNumberAr(decisions.length)} توصيات بأولوية عالية · جاهزة للتنفيذ بنقرة واحدة`}
+            <h3 className="text-base font-bold text-white">
+              قرارات اليوم المقترحة (AI Recommendations)
+            </h3>
+            <p className="text-xs text-[#8f8f9d]">
+              {`${formatNumberAr(decisions.length)} توصيات بأولوية عالية جاهزة للتنفيذ بنقرة واحدة`}
             </p>
           </div>
           <Badge tone="success" pill>
-            <span className="size-[8px] rounded-full bg-[var(--color-success)]" />
-            يعمل الآن
+            <span className="size-[8px] rounded-full bg-emerald-400 mr-1 animate-pulse" />
+            تحليل مستمر
           </Badge>
         </div>
 
@@ -175,17 +232,17 @@ export default function DashboardPage() {
           <Card className="p-4">
             <EmptyState
               title="لا توجد قرارات مقترحة اليوم"
-              description="سيظهر هنا أعلى ٣ توصيات يحدّدها الوكيل الذكي بناءً على درجات المخاطر."
+              description="سيظهر هنا أعلى توصيات يحدّدها الوكيل الذكي بناءً على درجات المخاطر."
             />
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-[14px] md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3">
             {decisions.map((b) => (
               <DecisionCard key={b.id} bond={b} onExecute={onExecute} />
             ))}
           </div>
         )}
       </section>
-    </>
+    </div>
   );
 }
