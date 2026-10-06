@@ -26,14 +26,36 @@ def is_valid_email(value: Optional[str]) -> bool:
     return bool(value) and bool(_EMAIL_RE.match(value.strip()))
 
 
-def determine_escalation_strategy(days_overdue: int, risk_score: float) -> Dict[str, Any]:
+def determine_escalation_strategy(
+    days_overdue: int,
+    risk_score: float,
+    is_disputed: bool = False,
+    is_settled: bool = False,
+) -> Dict[str, Any]:
     """
-    Determines 4-tier collection escalation strategy:
+    Determines 4-tier collection escalation strategy with safety guardrails:
+    - Level 0: Skipped / Frozen (Settled account or disputed claim)
     - Level 1: Friendly Courtesy (Days overdue <= 0 or risk < 40)
     - Level 2: Official Follow-Up (Days overdue 1-14 or risk 40-70)
     - Level 3: Urgent Warning & Payment Plan (Days overdue 15-30 or risk 70-85)
     - Level 4: Final Legal Notice (Days overdue > 30 or risk > 85)
     """
+    if is_settled:
+        return {
+            "level": 0,
+            "label": "مسدد بالكامل",
+            "urgency": "none",
+            "tone": "لا يتطلب أي إجراء تحصيل",
+            "action_required": "الحساب مغلق ومسدد بالكامل.",
+        }
+    if is_disputed:
+        return {
+            "level": 0,
+            "label": "مطالبة معلقة لوجود نزاع",
+            "urgency": "none",
+            "tone": "تجميد المتابعة وإحالة للوساطة القانونية",
+            "action_required": "تم إيقاف التذكيرات الآلية مؤقتاً لحين فض النزاع التجاري.",
+        }
     if days_overdue > 30 or risk_score >= 85:
         return {
             "level": 4,
@@ -66,6 +88,84 @@ def determine_escalation_strategy(days_overdue: int, risk_score: float) -> Dict[
             "tone": "ودي واستشاري قبل موعد الاستحقاق",
             "action_required": "تذكير بموعد الاستحقاق القادم، مع كامل تقديرنا لشراكتكم الدائمة.",
         }
+
+
+def generate_reminder_message(
+    client_name: str,
+    amount: float,
+    days_overdue: int,
+    description: str,
+    bond_number: str = "",
+    risk_score: float = 50.0,
+    is_disputed: bool = False,
+    is_settled: bool = False,
+) -> Dict[str, Any]:
+    """Generates the structured Arabic reminder copy and escalation strategy."""
+    strategy = determine_escalation_strategy(
+        days_overdue=days_overdue,
+        risk_score=risk_score,
+        is_disputed=is_disputed,
+        is_settled=is_settled,
+    )
+    level = strategy["level"]
+    label = strategy["label"]
+    action_req = strategy["action_required"]
+
+    if level == 0:
+        return {
+            "strategy": strategy,
+            "body": f"تم تجميد التذكير للعميل {client_name}: {action_req}",
+            "level": 0,
+            "label": label,
+        }
+
+    salutation = f"السيد/ة {client_name} المحترم/ة،"
+    amount_str = f"{amount:,.2f} ر.س"
+    bond_ref = f" (سند رقم: {bond_number})" if bond_number else ""
+
+    if level == 4:
+        body = (
+            f"{salutation}\n\n"
+            f"إشعار قانوني نهائي بشأن المستحقات المالية المتأخرة بمبلغ {amount_str}{bond_ref} بخصوص {description}.\n\n"
+            f"نظراً لتجاوز فترة السداد المحددة بـ {days_overdue} يوماً دون تسوية، "
+            f"نحيطكم علماً بأنه سيتم رفع السند التنفيذي إلى الدائرة القضائية المختصة عبر منصة ناجز خلال 48 ساعة "
+            f"في حال عدم إتمام السداد الفوري.\n\n"
+            f"{action_req}\n\n"
+            f"الإدارة القانونية والتحصيل — منصة تحصيل"
+        )
+    elif level == 3:
+        installment_val = amount / 3.0
+        body = (
+            f"{salutation}\n\n"
+            f"تنبيه عاجل بخصوص المستحقات المالية بمبلغ {amount_str}{bond_ref} المتعلقة بـ {description}.\n\n"
+            f"المبلغ متأخر منذ {days_overdue} يوماً. تقديراً لشراكتكم، يسعدنا أن نعرض عليكم إمكانية جدولة المبلغ "
+            f"على 3 دفعات شهرية ميسرة بقيمة ({installment_val:,.2f} ر.س شهرياً).\n\n"
+            f"{action_req}\n\n"
+            f"فريق التحصيل المالي — منصة تحصيل"
+        )
+    elif level == 2:
+        body = (
+            f"{salutation}\n\n"
+            f"تحية طيبة، نود متابعة الفاتورة المستحقة بمبلغ {amount_str}{bond_ref} الخاصة بـ {description}.\n\n"
+            f"{action_req}\n\n"
+            f"شاكرين لكم حسن تعاونكم الدائم.\n"
+            f"قسم الحسابات — منصة تحصيل"
+        )
+    else:
+        body = (
+            f"{salutation}\n\n"
+            f"تحية طيبة، نود تذكيركم بموعد استحقاق السند المالي بمبلغ {amount_str}{bond_ref} بخصوص {description}.\n\n"
+            f"{action_req}\n\n"
+            f"مع أطيب التحيات،\n"
+            f"فريق خدمة العملاء — منصة تحصيل"
+        )
+
+    return {
+        "strategy": strategy,
+        "body": body,
+        "level": level,
+        "label": label,
+    }
 
 
 def analyze_and_update_risks_sync(session: Session) -> Dict[str, Any]:
@@ -190,6 +290,8 @@ def send_smart_reminder_sync(
     description: str,
     bond_number: str = "",
     risk_score: float = 50.0,
+    is_disputed: bool = False,
+    is_settled: bool = False,
 ) -> Dict[str, Any]:
     """
     Generates personalized Arabic copy based on escalation level,
@@ -201,52 +303,33 @@ def send_smart_reminder_sync(
     resend_api_key = os.getenv("RESEND_API_KEY", "")
     from_email = os.getenv("FROM_EMAIL", "collections@tahseel.sa")
 
-    strategy = determine_escalation_strategy(days_overdue, risk_score)
-    level = strategy["level"]
-    label = strategy["label"]
-    action_req = strategy["action_required"]
+    msg_data = generate_reminder_message(
+        client_name=client_name,
+        amount=amount,
+        days_overdue=days_overdue,
+        description=description,
+        bond_number=bond_number,
+        risk_score=risk_score,
+        is_disputed=is_disputed,
+        is_settled=is_settled,
+    )
 
-    # Arabic tailored copywriting
-    salutation = f"السيد/ة {client_name} المحترم/ة،"
+    strategy = msg_data["strategy"]
+    level = msg_data["level"]
+    label = msg_data["label"]
+    body = msg_data["body"]
     amount_str = f"{amount:,.2f} ر.س"
-    bond_ref = f" (سند رقم: {bond_number})" if bond_number else ""
 
-    if level == 4:
-        body = (
-            f"{salutation}\n\n"
-            f"إشعار قانوني نهائي بشأن المستحقات المالية المتأخرة بمبلغ {amount_str}{bond_ref} بخصوص {description}.\n\n"
-            f"نظراً لتجاوز فترة السداد المحددة بـ {days_overdue} يوماً دون تسوية، "
-            f"نحيطكم علماً بأنه سيتم رفع السند التنفيذي إلى الدائرة القضائية المختصة عبر منصة ناجز خلال 48 ساعة "
-            f"في حال عدم إتمام السداد الفوري.\n\n"
-            f"{action_req}\n\n"
-            f"الإدارة القانونية والتحصيل — منصة تحصيل"
-        )
-    elif level == 3:
-        installment_val = amount / 3.0
-        body = (
-            f"{salutation}\n\n"
-            f"تنبيه عاجل بخصوص المستحقات المالية بمبلغ {amount_str}{bond_ref} المتعلقة بـ {description}.\n\n"
-            f"المبلغ متأخر منذ {days_overdue} يوماً. تقديراً لشراكتكم، يسعدنا أن نعرض عليكم إمكانية جدولة المبلغ "
-            f"على 3 دفعات شهرية ميسرة بقيمة ({installment_val:,.2f} ر.س شهرياً).\n\n"
-            f"{action_req}\n\n"
-            f"فريق التحصيل المالي — منصة تحصيل"
-        )
-    elif level == 2:
-        body = (
-            f"{salutation}\n\n"
-            f"تحية طيبة، نود متابعة الفاتورة المستحقة بمبلغ {amount_str}{bond_ref} الخاصة بـ {description}.\n\n"
-            f"{action_req}\n\n"
-            f"شاكرين لكم حسن تعاونكم الدائم.\n"
-            f"قسم الحسابات — منصة تحصيل"
-        )
-    else:
-        body = (
-            f"{salutation}\n\n"
-            f"تحية طيبة، نود تذكيركم بموعد استحقاق السند المالي بمبلغ {amount_str}{bond_ref} بخصوص {description}.\n\n"
-            f"{action_req}\n\n"
-            f"مع أطيب التحيات،\n"
-            f"فريق خدمة العملاء — منصة تحصيل"
-        )
+    if level == 0:
+        return {
+            "status": "skipped",
+            "notification_id": None,
+            "recipient": client_name,
+            "level": 0,
+            "label": label,
+            "simulation": True,
+            "message_preview": body,
+        }
 
     # Persist in NotificationRepository
     notification = NotificationRepository.create_notification(
