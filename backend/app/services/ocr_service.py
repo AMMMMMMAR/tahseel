@@ -35,6 +35,8 @@ class OCRService:
             api_key = os.getenv("GEMINI_API_KEY", "")
             if not api_key:
                 raise ValueError("GEMINI_API_KEY is not set in environment.")
+            # Sync GOOGLE_API_KEY so OS environment dummy keys don't conflict
+            os.environ["GOOGLE_API_KEY"] = api_key
             cls._client = genai.Client(api_key=api_key)
         return cls._client
 
@@ -46,11 +48,11 @@ class OCRService:
     ) -> BondExtractionSchema:
         """
         Extracts structured Arabic bond entities from raw image or PDF bytes.
-        Supports: image/jpeg, image/png, image/webp, and application/pdf.
+        Supports: image/jpeg, image/png, image/webp, and application/pdf with multi-model fallback.
         """
         client = cls.get_client()
 
-        # Prepare content parts for Gemini 2.5 Flash
+        # Prepare content parts
         contents = []
 
         if "pdf" in mime_type.lower():
@@ -67,15 +69,35 @@ class OCRService:
 
         contents.append(SYSTEM_PROMPT)
 
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=contents,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=BondExtractionSchema,
-                temperature=0.1,
-            ),
-        )
+        candidate_models = list(dict.fromkeys([
+            os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+            "gemini-2.5-flash",
+            "gemini-flash-latest",
+            "gemini-2.0-flash",
+        ]))
+
+        response = None
+        last_err = None
+
+        for m in candidate_models:
+            try:
+                response = client.models.generate_content(
+                    model=m,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=BondExtractionSchema,
+                        temperature=0.1,
+                    ),
+                )
+                if response and response.text:
+                    break
+            except Exception as e:
+                last_err = e
+                logger.warning(f"OCR model {m} failed: {e}. Trying next model...")
+
+        if response is None or not response.text:
+            raise last_err or RuntimeError("فشل استخراج البيانات من جميع نماذج الرؤية المتاحة.")
 
         raw_json = json.loads(response.text)
         result = BondExtractionSchema.model_validate(raw_json)

@@ -59,8 +59,9 @@ def extract_bond_from_image(image_path: str) -> dict:
         "إذا لم تجد حقلاً معيناً، اترك القيمة فارغة."
     )
 
+    model_name = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model=model_name,
         contents=[image, prompt],
         config=types.GenerateContentConfig(
             response_mime_type="application/json",
