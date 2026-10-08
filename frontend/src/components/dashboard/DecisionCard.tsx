@@ -17,54 +17,47 @@ export function DecisionCard({ bond, onExecute }: DecisionCardProps) {
     risk.level === "high" ? "danger" : risk.level === "medium" ? "warn" : "primary";
 
   return (
-    <Card variant="soft" className="flex w-full flex-col gap-[14px] p-[18px]">
+    <Card className="flex w-full flex-col justify-between gap-4 p-5 transition-all hover:border-slate-700/80">
       <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-[2px] text-start min-w-0">
-          <p className="truncate text-[14px] font-bold text-[var(--color-fg)]">
+        <div className="flex flex-col text-start min-w-0">
+          <p className="truncate text-sm font-bold text-white">
             {bond.clients?.name || "—"}
           </p>
-          <p className="truncate text-[10px] text-[var(--color-fg-faint)]">
-            عميل آجل · {bond.bond_number}
+          <p className="truncate text-xs text-slate-400">
+            سند رقم: {bond.bond_number}
           </p>
         </div>
         <RiskBadge score={risk.score} />
       </div>
 
-      <Section
-        title="السبب"
-        dotColor="bg-[var(--color-fg-subtle)]"
-        textClass="text-[var(--color-fg-soft)]"
-      >
-        {buildReason(bond)}
-      </Section>
+      <div className="flex flex-col gap-3">
+        <div className="text-start">
+          <p className="text-[11px] font-semibold text-slate-400 mb-1">سبب التوصية</p>
+          <p className="text-xs text-slate-300 leading-relaxed">{buildReason(bond)}</p>
+        </div>
 
-      <Card variant="solid" className="flex flex-col gap-[6px] bg-[var(--color-bg-action)] p-[12px]">
-        <Section
-          title="الإجراء المقترح"
-          dotColor="bg-[var(--color-success)]"
-          textClass="text-white"
-          headColor="text-[var(--color-success)]"
-        >
-          {action.label} — {buildActionDetail(bond)}
-        </Section>
-      </Card>
+        <div className="rounded-xl bg-slate-900/60 border border-slate-800/80 p-3 text-start">
+          <p className="text-[11px] font-semibold text-emerald-400 mb-1">الإجراء الموصى به</p>
+          <p className="text-xs text-white leading-relaxed font-medium">
+            {action.label} — {buildActionDetail(bond)}
+          </p>
+        </div>
 
-      <Section
-        title="الأثر المتوقّع"
-        dotColor="bg-[var(--color-success)]"
-        headColor="text-[var(--color-success)]"
-        textClass="text-[var(--color-success-soft)]"
-      >
-        متوقّع تحسين المركز بقيمة {formatCurrencyAr(bond.amount)} ر.س.
-      </Section>
+        <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-800/60">
+          <span className="text-slate-400">قيمة المطالبة:</span>
+          <span className="text-emerald-400 font-semibold tabular">
+            {formatCurrencyAr(bond.amount)} ر.س
+          </span>
+        </div>
+      </div>
 
       <Button
         variant={buttonVariant}
-        size="lg"
-        className="h-[64px] w-full"
+        size="md"
+        className="w-full text-xs font-semibold h-10 shadow-sm"
         onClick={() => onExecute?.(bond)}
       >
-        تنفيذ الإجراء الآن
+        تنفيذ الإجراء
       </Button>
     </Card>
   );

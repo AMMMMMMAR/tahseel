@@ -1,148 +1,291 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { LoadingState, ErrorState, EmptyState } from "@/components/ui/States";
 import { api } from "@/lib/api";
-import { formatDateAr, formatNumberAr } from "@/lib/utils";
+import { formatDateAr, formatNumberAr, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
-import { Mail, Clock, ShieldAlert, Bot, Activity, FileText } from "lucide-react";
+import {
+  Activity,
+  Bot,
+  Clock,
+  FileText,
+  Mail,
+  ShieldAlert,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 
 export default function AgentLogsPage() {
+  const [filter, setFilter] = useState<string>("all");
+  const [search, setSearch] = useState<string>("");
+
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["agent-logs"],
     queryFn: () => api.getAgentLogs(50),
-    refetchInterval: 30000, // Refresh every 30s
+    refetchInterval: 30000,
   });
+
+  const logs = data?.logs ?? [];
+
+  // Metrics
+  const metrics = useMemo(() => {
+    const reminders = logs.filter(
+      (l) => l.action_type === "reminder_sent" || l.action_type === "reminder_simulated"
+    ).length;
+    const risks = logs.filter(
+      (l) => l.action_type === "analyze_risks" || l.action_type === "find_high_risk"
+    ).length;
+    const reports = logs.filter((l) => l.action_type === "daily_report_generated").length;
+    return { total: logs.length, reminders, risks, reports };
+  }, [logs]);
+
+  // Filtered logs
+  const filtered = useMemo(() => {
+    let result = logs;
+
+    if (filter === "reminders") {
+      result = result.filter(
+        (l) => l.action_type === "reminder_sent" || l.action_type === "reminder_simulated"
+      );
+    } else if (filter === "risks") {
+      result = result.filter(
+        (l) => l.action_type === "analyze_risks" || l.action_type === "find_high_risk"
+      );
+    } else if (filter === "reports") {
+      result = result.filter((l) => l.action_type === "daily_report_generated");
+    }
+
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter((l) => {
+        const clientName = l.client_name || l.bonds?.clients?.name || l.details?.recipient || "";
+        const bondNum = l.bond_number || l.bonds?.bond_number || "";
+        const summary = l.details?.summary || l.details?.message || "";
+        const label = l.details?.label || "";
+        const desc = JSON.stringify(l.details || "");
+        return (
+          clientName.toLowerCase().includes(q) ||
+          bondNum.toLowerCase().includes(q) ||
+          summary.toLowerCase().includes(q) ||
+          label.toLowerCase().includes(q) ||
+          desc.toLowerCase().includes(q)
+        );
+      });
+    }
+
+    return result;
+  }, [logs, filter, search]);
 
   return (
     <>
       <PageHeader
-        title="نشاط الوكيل (AI Agent Logs)"
-        subtitle="سجل مفصل لكل الإجراءات التلقائية والتنبيهات التي اتخذها الوكيل الذكي"
+        title="سجل قرارات وإجراءات الوكيل الذكي"
+        subtitle="سجل تدقيق كامل لكافة القرارات والرسائل التلقائية المعتمدة من نظام التحصيل"
         action={
-          <Badge tone="brand" pill>
-            <span className="size-[8px] rounded-full bg-[var(--color-brand)] animate-pulse" />
-            يعمل في الخلفية
+          <Badge tone="success" pill>
+            <span className="size-2 rounded-full bg-emerald-400 animate-pulse ml-1.5" />
+            تدقيق مستمر للقرارات
           </Badge>
         }
       />
 
-      <div className="flex flex-col gap-[14px]">
+      {/* 3 Summary Activity Counters */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <Card className="p-4 flex items-center justify-between">
+          <div className="text-start">
+            <span className="text-xs text-slate-400 font-medium">إجمالي الإجراءات المنفذة</span>
+            <p className="text-2xl font-bold text-white tabular mt-1">{formatNumberAr(metrics.total)}</p>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-slate-800 text-slate-300 flex items-center justify-center">
+            <Activity size={18} />
+          </div>
+        </Card>
+
+        <Card className="p-4 flex items-center justify-between">
+          <div className="text-start">
+            <span className="text-xs text-slate-400 font-medium">إشعارات وتنبيهات أُرسلت</span>
+            <p className="text-2xl font-bold text-rose-400 tabular mt-1">{formatNumberAr(metrics.reminders)}</p>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center">
+            <Mail size={18} />
+          </div>
+        </Card>
+
+        <Card className="p-4 flex items-center justify-between">
+          <div className="text-start">
+            <span className="text-xs text-slate-400 font-medium">تقارير وتقييمات مكتملة</span>
+            <p className="text-2xl font-bold text-emerald-400 tabular mt-1">{formatNumberAr(metrics.risks + metrics.reports)}</p>
+          </div>
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+            <Zap size={18} />
+          </div>
+        </Card>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800">
+        <input
+          type="search"
+          placeholder="ابحث باسم العميل أو رقم السند في السجل…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full max-w-sm rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-xs text-white placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none transition"
+        />
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          {[
+            { key: "all", label: "كل العمليات" },
+            { key: "reminders", label: "رسائل التنبيه" },
+            { key: "risks", label: "فحص المخاطر" },
+            { key: "reports", label: "التقارير اليومية" },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setFilter(tab.key)}
+              className={cn(
+                "px-3 py-1.5 rounded-xl text-xs font-medium transition-all",
+                filter === tab.key
+                  ? "bg-emerald-600 text-white shadow-sm"
+                  : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Activity Cards List */}
+      <div className="flex flex-col gap-3">
         {isLoading ? (
           <LoadingState label="جاري تحميل سجل النشاط..." />
         ) : isError ? (
-          <Card className="p-4">
+          <Card className="p-5">
             <ErrorState
               title="تعذّر تحميل السجل"
               description={(error as Error & { detail?: string })?.detail || error.message}
               onRetry={() => refetch()}
             />
           </Card>
-        ) : !data?.logs || data.logs.length === 0 ? (
-          <Card className="p-4">
+        ) : filtered.length === 0 ? (
+          <Card className="p-6">
             <EmptyState
-              title="لا يوجد أي نشاط للوكيل بعد"
-              description="بمجرد أن يقوم الوكيل باتخاذ أي إجراء (مثل إرسال تذكيرات) سيظهر هنا."
+              title="لا توجد إجراءات مطابقة"
+              description="لم يتم العثور على أي نشاط مطابق للبحث أو الفلتر المحدد."
             />
           </Card>
         ) : (
-          <div className="flex flex-col gap-3">
-            {data.logs.map((log) => {
-              const dateObj = new Date(log.executed_at);
-              const time = dateObj.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
-              const dateStr = formatDateAr(log.executed_at);
-              
-              let title = "إجراء غير معروف";
-              let description = "";
-              let badgeText = "";
-              let badgeTone: "brand" | "danger" | "success" | "warning" | "info" = "info";
-              let icon = <Bot size={24} />;
-              let iconBg = "bg-[#f0f5ff]";
-              let iconColor = "text-[var(--color-brand)]";
+          filtered.map((log) => {
+            const dateObj = new Date(log.executed_at);
+            const time = dateObj.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
+            const dateStr = formatDateAr(log.executed_at);
 
-              if (log.action_type === "reminder_sent") {
-                const clientName = log.bonds?.clients?.name || "عميل غير معروف";
-                const bondNum = log.bonds?.bond_number || "سند غير معروف";
-                const amount = formatNumberAr(log.bonds?.amount || 0);
-                
-                title = `إرسال رسالة تذكير إلى ${clientName}`;
-                description = `قام الوكيل بإرسال رسالة إلى ${log.details?.to} بخصوص الفاتورة ${bondNum} بمبلغ ${amount} ر.س. التأخير كان ${log.details?.days_overdue} يوماً.`;
-                badgeText = log.details?.tone || "تنبيه";
-                badgeTone = (log.details?.days_overdue ?? 0) > 7 ? "danger" : "warning";
-                icon = <Mail size={24} />;
-                iconBg = "bg-[#fff0f0]";
-                iconColor = "text-[#dc2626]";
-                
-              } else if (log.action_type === "analyze_risks") {
-                title = "تحليل وتحديث مخاطر العملاء";
-                description = log.details?.message || `تم تقييم وتحديث درجات المخاطر لـ ${log.details?.updated_count || 0} سند/فاتورة.`;
-                badgeText = "تقييم دوري";
-                badgeTone = "info";
-                icon = <Activity size={24} />;
-                iconBg = "bg-[#f0f9ff]";
-                iconColor = "text-[#0284c7]";
-                
-              } else if (log.action_type === "find_high_risk") {
-                title = "اكتشاف حالات ذات مخاطر عالية";
-                description = log.details?.message || `تم اكتشاف ${log.details?.high_risk_count || 0} حالات ذات مخاطر عالية تتطلب تدخلاً.`;
-                badgeText = "خطر عالٍ";
-                badgeTone = "danger";
-                icon = <ShieldAlert size={24} />;
-                iconBg = "bg-[#fff0f0]";
-                iconColor = "text-[#dc2626]";
-                
-              } else if (log.action_type === "daily_report_generated") {
-                title = "إنشاء التقرير اليومي للإدارة";
-                description = `إجمالي الديون: ${log.details?.["إجمالي_الديون_النشطة"] || "0"} | المتأخرات: ${log.details?.["المتأخرات"] || "0"} | المحصل هذا الشهر: ${log.details?.["المحصّل_هذا_الشهر"] || "0"}.`;
-                badgeText = "مكتمل";
-                badgeTone = "success";
-                icon = <FileText size={24} />;
-                iconBg = "bg-[#f0fdf4]";
-                iconColor = "text-[#16a34a]";
-              }
+            let title = "إجراء بالنظام";
+            let description = "";
+            let badgeText = "";
+            let badgeTone: "brand" | "danger" | "success" | "warning" | "info" = "info";
+            let icon = <Bot size={20} />;
+            let iconColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
 
-              return (
-                <Card key={log.id} className="overflow-hidden">
-                  <div className="flex flex-col sm:flex-row gap-4 p-4 items-start sm:items-center">
-                    {/* Icon */}
-                    <div className={`flex size-[48px] shrink-0 items-center justify-center rounded-full ${iconBg} ${iconColor}`}>
-                      {icon}
+            if (log.action_type === "reminder_sent" || log.action_type === "reminder_simulated") {
+              const clientName = log.client_name || log.bonds?.clients?.name || log.details?.recipient || "عميل غير معروف";
+              const bondNum = log.bond_number || log.bonds?.bond_number || "سند غير معروف";
+              const amountVal = (log.details?.amount as number) ?? log.bonds?.amount ?? 0;
+              const amount = formatNumberAr(amountVal);
+              const label = (log.details?.label as string) || "تذكير بالسداد";
+              const daysOverdue = (log.details?.days_overdue as number) ?? 0;
+
+              title = `${label} — ${clientName}`;
+              description =
+                (log.details?.summary as string) ||
+                `قام الوكيل الذكي بإرسال ${label} بخصوص السند ${bondNum} بمبلغ ${amount} ر.س. (تأخير ${daysOverdue} يوم).`;
+              badgeText = label;
+              badgeTone = daysOverdue > 60 ? "danger" : daysOverdue > 14 ? "warning" : "info";
+              icon = <Mail size={20} />;
+              iconColor = daysOverdue > 60
+                ? "text-rose-400 bg-rose-500/10 border-rose-500/20"
+                : "text-amber-400 bg-amber-500/10 border-amber-500/20";
+            } else if (log.action_type === "analyze_risks") {
+              title = "تحليل وتحديث مخاطر السندات والعملاء";
+              description =
+                (log.details?.message as string) ||
+                `تم تقييم وتحديث درجات المخاطر لـ ${log.details?.updated_count || 0} سندات وفواتير نشطة.`;
+              badgeText = "تقييم دوري";
+              badgeTone = "info";
+              icon = <Activity size={20} />;
+              iconColor = "text-sky-400 bg-sky-500/10 border-sky-500/20";
+            } else if (log.action_type === "find_high_risk") {
+              title = "اكتشاف الحالات الأكثر خطورة للمتابعة";
+              description =
+                (log.details?.message as string) ||
+                `تم اكتشاف ${log.details?.high_risk_count || 0} حالة تتطلب التدخل والمتابعة الفورية.`;
+              badgeText = "خطر عالٍ";
+              badgeTone = "danger";
+              icon = <ShieldAlert size={20} />;
+              iconColor = "text-rose-400 bg-rose-500/10 border-rose-500/20";
+            } else if (log.action_type === "daily_report_generated") {
+              title = "إصدار التقرير اليومي لمحفظة التحصيل";
+              const debts = (log.details?.["إجمالي_الديون_النشطة"] as string) || "0 ر.س";
+              const overdueDebt = (log.details?.["المتأخرات_المتراكمة"] as string) || (log.details?.["المتأخرات"] as string) || "0 ر.س";
+              const recoveryRate = (log.details?.["معدل_التعافي_المقدر"] as string) || "";
+              const activeCount = (log.details?.["عدد_السندات_النشطة"] as number) ?? 0;
+
+              description = `تقرير تحليلي للمحفظة: إجمالي الديون ${debts} | المتأخرات ${overdueDebt} | السندات النشطة (${activeCount}) | معدل الاسترداد ${recoveryRate}`;
+              badgeText = "تقرير تنفيذي";
+              badgeTone = "success";
+              icon = <FileText size={20} />;
+              iconColor = "text-teal-400 bg-teal-500/10 border-teal-500/20";
+            } else {
+              title = `إجراء في النظام (${log.action_type})`;
+              description = (log.details?.message as string) || (log.details?.summary as string) || "تم تنفيذ الإجراء بنجاح بواسطة الوكيل الذكي.";
+              badgeText = "إجراء معتمد";
+              badgeTone = "info";
+            }
+
+            return (
+              <Card key={log.id} className="p-4 transition-colors hover:border-slate-700/80">
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                  {/* Icon */}
+                  <div className={`flex size-11 shrink-0 items-center justify-center rounded-xl border ${iconColor}`}>
+                    {icon}
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex flex-1 flex-col gap-1 text-start">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-white">
+                        {title}
+                      </h3>
+                      {badgeText && (
+                        <Badge tone={badgeTone} pill>
+                          {badgeText}
+                        </Badge>
+                      )}
                     </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {description}
+                    </p>
 
-                    {/* Content */}
-                    <div className="flex flex-1 flex-col gap-1 text-start">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-[15px] font-bold text-[var(--color-fg)]">
-                          {title}
-                        </h3>
-                        {badgeText && (
-                          <Badge tone={badgeTone} pill>
-                            {badgeText}
-                          </Badge>
-                        )}
+                    <div className="mt-1 flex flex-wrap items-center gap-4 text-xs text-slate-500">
+                      <div className="flex items-center gap-1.5">
+                        <Clock size={13} />
+                        <span className="tabular">{time} — {dateStr}</span>
                       </div>
-                      <p className="text-[13px] text-[var(--color-fg-subtle)] leading-relaxed">
-                        {description}
-                      </p>
-                      
-                      <div className="mt-2 flex flex-wrap items-center gap-4 text-[12px] text-[var(--color-fg-faint)]">
-                        <div className="flex items-center gap-1.5">
-                          <Clock size={14} />
-                          <span>{time} — {dateStr}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Bot size={14} />
-                          <span>إجراء آلي (Agent)</span>
-                        </div>
+                      <div className="flex items-center gap-1.5">
+                        <Zap size={13} className="text-emerald-400" />
+                        <span>إجراء آلي معتمد</span>
                       </div>
                     </div>
                   </div>
-                </Card>
-              );
-            })}
-          </div>
+                </div>
+              </Card>
+            );
+          })
         )}
       </div>
     </>

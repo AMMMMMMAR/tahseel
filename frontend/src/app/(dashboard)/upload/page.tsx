@@ -209,11 +209,11 @@ export default function UploadPage() {
   return (
     <>
       <PageHeader
-        title="استوديو فحص السندات والـ OCR (Visual Document Inspector)"
-        subtitle="ارفع صورة أو ملف PDF لسند تجاري ليقوم نموذج الرؤية الذكي Gemini 2.5 Flash باستخراج البيانات وتحديد درجة الثقة تلقائياً"
+        title="فحص ومراجعة السندات الذكية"
+        subtitle="ارفع صورة أو ملف PDF لأي سند تجاري ليتم استخراج البيانات والتحقق من صحتها آلياً"
         action={
           <div className="flex items-center gap-2">
-            <span className="text-xs text-[#8f8f9d] hidden sm:inline">
+            <span className="text-xs text-slate-400 hidden sm:inline">
               تجربة سريعة:
             </span>
             <Button
@@ -221,39 +221,39 @@ export default function UploadPage() {
               size="sm"
               onClick={() => loadSampleBond(1)}
               disabled={uploadMutation.isPending}
-              className="text-xs bg-[#121216] border-[#222228] text-white hover:bg-[#1a1a22]"
+              className="text-xs bg-slate-900 border-slate-800 text-slate-200 hover:text-white hover:bg-slate-800"
             >
-              🧪 نموذج تجريبي ١
+              نموذج تجريبي ١
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => loadSampleBond(2)}
               disabled={uploadMutation.isPending}
-              className="text-xs bg-[#121216] border-[#222228] text-white hover:bg-[#1a1a22]"
+              className="text-xs bg-slate-900 border-slate-800 text-slate-200 hover:text-white hover:bg-slate-800"
             >
-              🧪 نموذج تجريبي ٢
+              نموذج تجريبي ٢
             </Button>
           </div>
         }
       />
 
       {/* Split-Screen Studio Grid */}
-      <div className="grid gap-5 lg:grid-cols-12 items-start">
+      <div className="grid gap-6 lg:grid-cols-12 items-start">
         {/* Left Pane: Visual Document Preview (5 cols) */}
-        <Card className="lg:col-span-5 flex flex-col p-5 bg-[#0a0a0c] border-[#222228] shadow-2xl rounded-2xl">
-          <div className="flex items-center justify-between pb-3 border-b border-[#1f1f24] mb-3">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+        <Card className="lg:col-span-5 flex flex-col p-6">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-800/80 mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                 <FileCheck2 size={18} />
               </div>
               <h2 className="text-sm font-bold text-white">
-                ١. معاينة المستند الأصلي
+                معاينة المستند الأصلي
               </h2>
             </div>
 
             {fileName && (
-              <span className="text-[11px] font-mono text-[#8f8f9d] max-w-[150px] truncate">
+              <span className="text-xs tabular text-slate-400 max-w-[150px] truncate">
                 {fileName}
               </span>
             )}
@@ -261,7 +261,7 @@ export default function UploadPage() {
 
           {/* Interactive Document Dropzone */}
           <div
-            className="flex min-h-[360px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[#262632] bg-[#101014] p-4 text-center relative overflow-hidden transition hover:border-blue-500/50"
+            className="flex min-h-[360px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-800 bg-slate-900/40 p-4 text-center relative overflow-hidden transition hover:border-emerald-500/40"
             onDragOver={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -279,9 +279,9 @@ export default function UploadPage() {
                 <img
                   src={previewUrl}
                   alt="معاينة السند"
-                  className="max-h-[340px] w-auto rounded-lg object-contain border border-[#22222a] shadow-lg transition duration-200 group-hover:scale-[1.01]"
+                  className="max-h-[340px] w-auto rounded-lg object-contain border border-slate-800 shadow-lg transition duration-200 group-hover:scale-[1.01]"
                 />
-                <div className="absolute bottom-2 right-2 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] text-white flex items-center gap-1 font-mono">
+                <div className="absolute bottom-2 right-2 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-md text-[10px] text-white flex items-center gap-1">
                   <ZoomIn size={12} />
                   معاينة مباشرة
                 </div>
@@ -296,15 +296,15 @@ export default function UploadPage() {
               </div>
             ) : (
               <div className="flex flex-col items-center gap-3 py-10">
-                <div className="w-14 h-14 rounded-2xl bg-[#16161e] border border-[#2a2a36] flex items-center justify-center text-blue-400 shadow-inner">
-                  <UploadCloud size={28} />
+                <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-emerald-400 shadow-inner">
+                  <UploadCloud size={26} />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-white">
                     اسحب المستند وأفلته هنا أو اضغط للاختيار
                   </p>
-                  <p className="text-xs text-[#717180] mt-1">
-                    الملفات المدعومة: صور (JPG, PNG, WEBP) وملفات PDF تجارية
+                  <p className="text-xs text-slate-400 mt-1">
+                    الملفات المدعومة: صور (JPG, PNG) وملفات PDF
                   </p>
                 </div>
               </div>
@@ -325,16 +325,16 @@ export default function UploadPage() {
               size="md"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-500 text-white font-medium shadow-md shadow-blue-600/20 flex-1"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow-md shadow-emerald-600/20 flex-1 h-10 text-xs"
             >
               {uploadMutation.isPending ? (
                 <>
-                  <Sparkles size={16} className="ml-1.5 animate-spin" />
-                  جاري الاستخراج بالذكاء الاصطناعي…
+                  <Sparkles size={15} className="ml-1.5 animate-spin" />
+                  جاري الاستخراج الآلي…
                 </>
               ) : (
                 <>
-                  <UploadCloud size={16} className="ml-1.5" />
+                  <UploadCloud size={15} className="ml-1.5" />
                   اختيار ملف
                 </>
               )}
@@ -352,30 +352,30 @@ export default function UploadPage() {
                 if (fileInputRef.current) fileInputRef.current.value = "";
               }}
               disabled={uploadMutation.isPending}
-              className="border-[#262630] text-[#a0a0b0] hover:text-white hover:bg-[#181820]"
+              className="border-slate-800 text-slate-400 hover:text-white hover:bg-slate-900 h-10 text-xs"
             >
-              <RotateCcw size={14} className="ml-1" />
+              <RotateCcw size={13} className="ml-1" />
               إعادة ضبط
             </Button>
           </div>
         </Card>
 
         {/* Right Pane: Extracted Data Studio & Confidence Gauge (7 cols) */}
-        <Card className="lg:col-span-7 flex flex-col p-5 bg-[#0a0a0c] border-[#222228] shadow-2xl rounded-2xl">
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#1f1f24] mb-3">
-            <div className="flex items-center gap-2">
+        <Card className="lg:col-span-7 flex flex-col p-6">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800/80 mb-4">
+            <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                 <CheckCircle2 size={18} />
               </div>
               <h2 className="text-sm font-bold text-white">
-                ٢. البيانات المستخرجة ومؤشرات الدقة
+                البيانات المستخرجة
               </h2>
             </div>
 
             {confidence !== null ? (
               <Badge tone="success" pill>
                 <Sparkles size={12} className="ml-1" />
-                دقة النموذج: {confidence}% (Gemini 2.5)
+                نسبة الثقة: {confidence}%
               </Badge>
             ) : (
               <Badge tone="neutral" pill>
@@ -400,15 +400,15 @@ export default function UploadPage() {
                     }`}
                   >
                     <div className="flex items-center justify-between text-xs">
-                      <label className="text-[#a5a5b5] font-medium">
+                      <label className="text-slate-300 font-medium">
                         {FIELD_LABELS[field]}
                         {isRequired && (
                           <span className="text-rose-400 font-bold mr-1">*</span>
                         )}
                       </label>
                       {extracted && form[field] && (
-                        <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-mono">
-                          <CheckCircle2 size={10} />
+                        <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+                          <CheckCircle2 size={11} />
                           مستخرج
                         </span>
                       )}
@@ -431,7 +431,7 @@ export default function UploadPage() {
                           ? "مثال: 55000"
                           : ""
                       }
-                      className="rounded-xl border border-[#24242e] bg-[#121216] px-3.5 py-2.5 text-xs text-white placeholder:text-[#555562] focus:border-blue-500 focus:bg-[#16161c] focus:outline-none transition"
+                      className="rounded-xl border border-slate-800 bg-slate-900/50 px-3.5 py-2.5 text-xs text-white placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none transition"
                     />
                   </div>
                 );
@@ -440,9 +440,9 @@ export default function UploadPage() {
           </div>
 
           {/* Save Action */}
-          <div className="flex items-center justify-between gap-3 pt-5 mt-4 border-t border-[#1f1f24]">
-            <span className="text-xs text-[#717180]">
-              الحفظ يضيف السند إلى قاعدة بيانات SQLite المحلية للتحصيل.
+          <div className="flex items-center justify-between gap-3 pt-5 mt-4 border-t border-slate-800/80">
+            <span className="text-xs text-slate-400">
+              الحفظ يضيف السند مباشرة لقائمة المتابعة والتحصيل.
             </span>
 
             <Button
@@ -450,9 +450,9 @@ export default function UploadPage() {
               size="md"
               onClick={onSave}
               disabled={saveMutation.isPending || !extracted}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow-lg shadow-emerald-600/20 px-6"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium shadow-md shadow-emerald-600/20 px-6 h-10 text-xs"
             >
-              {saveMutation.isPending ? "جاري الحفظ والاعتماد…" : "💾 حفظ واعتماد السند"}
+              {saveMutation.isPending ? "جاري الحفظ والاعتماد…" : "حفظ واعتماد السند"}
             </Button>
           </div>
         </Card>

@@ -96,24 +96,24 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <PageHeader
-        title="مركز قيادة تحصيل الديون الذكي"
+        title="لوحة المتابعة والتحصيل"
         subtitle={lastUpdate ? `تحديث البيانات: ${lastUpdate}` : undefined}
         action={
           <div className="flex items-center gap-3">
             <Link
               href="/upload"
-              className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 shadow-md shadow-blue-600/20 transition"
+              className="rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-emerald-500 shadow-md shadow-emerald-600/20 transition flex items-center gap-2"
             >
-              + فحص سند جديد (OCR)
+              <span>+ فحص سند جديد</span>
             </Link>
           </div>
         }
       />
 
       {/* KPI Stats Row */}
-      <section className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="إجمالي المستحقات"
           value={formatNumberAr(summary.totalReceivables)}
@@ -124,7 +124,7 @@ export default function DashboardPage() {
           label="المتأخر سداده"
           value={formatNumberAr(summary.overdueAmount)}
           unit="ر.س"
-          caption={`${formatNumberAr(summary.overdueCount)} عملاء · يحتاج إجراءً اليوم`}
+          caption={`${formatNumberAr(summary.overdueCount)} فواتير تتطلب متابعة اليوم`}
           tone="danger"
         />
         <KpiCard
@@ -135,18 +135,18 @@ export default function DashboardPage() {
           tone="success"
         />
         <KpiCard
-          label="متوسط دورة التحصيل"
+          label="متوسط سرعة الاسترداد"
           value={formatNumberAr(summary.avgCycleDays)}
           unit="يوم"
-          caption="معدل استرداد قياسي عبر الوكيل الذكي"
+          caption="معدل استرداد ممتاز"
           tone="success"
         />
       </section>
 
-      {/* Split-Screen Interactive Command Center: Live Trace + Mobile Simulator */}
-      <section className="grid grid-cols-1 xl:grid-cols-12 gap-5 items-start">
-        {/* Left Column: Live Agent Trace Terminal (7 or 8 cols) */}
-        <div className="xl:col-span-8 flex flex-col gap-5">
+      {/* Split-Screen: Live Activity & Mobile Experience */}
+      <section className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+        {/* Left Column: Live Agent Activity & Priority Debtor Matrix (8 cols) */}
+        <div className="xl:col-span-8 flex flex-col gap-6">
           <LiveAgentTrace
             status={wsStatus}
             events={events}
@@ -158,23 +158,6 @@ export default function DashboardPage() {
 
           {/* Priority Debtor Matrix Table */}
           <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-white">
-                  أولويات المتابعة العاجلة
-                </h3>
-                <p className="text-xs text-[#8f8f9d]">
-                  السندات الأعلى خطورة التي تخضع لمستويات التصعيد من 1 إلى 4
-                </p>
-              </div>
-              <Link
-                href="/bonds"
-                className="text-xs text-blue-400 hover:text-blue-300 font-medium"
-              >
-                عرض كل السندات ←
-              </Link>
-            </div>
-
             {isLoading ? (
               <PriorityTableSkeleton />
             ) : isError ? (
@@ -191,17 +174,14 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right Column: Real-Time Mobile Simulator (4 cols) */}
+        {/* Right Column: Real-Time Mobile Experience Simulator (4 cols) */}
         <div className="xl:col-span-4 flex flex-col items-center">
-          <div className="w-full mb-3 text-center sm:text-start">
-            <h3 className="text-base font-bold text-white flex items-center justify-center sm:justify-start gap-2">
-              <span>محاكي تجربة المدين</span>
-              <Badge tone="success" pill>
-                تفاعل حي
-              </Badge>
+          <div className="w-full mb-3 text-start">
+            <h3 className="text-sm font-bold text-white">
+              محاكي تواصل العميل
             </h3>
-            <p className="text-xs text-[#8f8f9d]">
-              استقبال رسائل التذكير التفاعلية والردود السريعة لحظياً عبر واتساب
+            <p className="text-xs text-slate-400 mt-0.5">
+              معاينة فورية لرسائل التذكير وتفاعل المدين عبر واتساب
             </p>
           </div>
 
@@ -210,20 +190,14 @@ export default function DashboardPage() {
       </section>
 
       {/* Recommended Decisions Section */}
-      <section className="flex flex-col gap-3.5 pt-4 border-t border-[#1f1f24]">
-        <div className="flex min-h-[40px] flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-col gap-[2px] text-start">
-            <h3 className="text-base font-bold text-white">
-              قرارات اليوم المقترحة (AI Recommendations)
-            </h3>
-            <p className="text-xs text-[#8f8f9d]">
-              {`${formatNumberAr(decisions.length)} توصيات بأولوية عالية جاهزة للتنفيذ بنقرة واحدة`}
-            </p>
-          </div>
-          <Badge tone="success" pill>
-            <span className="size-[8px] rounded-full bg-emerald-400 mr-1 animate-pulse" />
-            تحليل مستمر
-          </Badge>
+      <section className="flex flex-col gap-4 pt-6 border-t border-slate-800/80">
+        <div className="flex flex-col text-start">
+          <h3 className="text-base font-bold text-white">
+            التوصيات المالية المقترحة
+          </h3>
+          <p className="text-xs text-slate-400">
+            {`${formatNumberAr(decisions.length)} توصيات تتطلب المراجعة السريعة`}
+          </p>
         </div>
 
         {isLoading ? (
@@ -236,7 +210,7 @@ export default function DashboardPage() {
             />
           </Card>
         ) : (
-          <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {decisions.map((b) => (
               <DecisionCard key={b.id} bond={b} onExecute={onExecute} />
             ))}

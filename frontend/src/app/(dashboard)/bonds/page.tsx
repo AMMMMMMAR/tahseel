@@ -37,36 +37,36 @@ export default function BondsPage() {
     <>
       <PageHeader
         title="الفواتير والسندات"
-        subtitle={`عدد السندات: ${data?.bonds?.length ?? 0}`}
+        subtitle={`عدد السندات المسجلة: ${data?.bonds?.length ?? 0}`}
         action={
           <Link
             href="/upload"
-            className="rounded-[5px] bg-[var(--color-brand)] px-4 py-3 text-[13px] font-semibold text-white hover:bg-[#2563eb]"
+            className="rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white hover:bg-emerald-500 shadow-md shadow-emerald-600/20 transition"
           >
-            + رفع سند جديد
+            + فحص سند جديد (OCR)
           </Link>
         }
       />
 
-      <Card className="flex flex-col gap-3 p-[18px]">
+      <Card className="flex flex-col gap-4 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <input
             type="search"
             placeholder="ابحث برقم السند، اسم العميل، أو الوصف…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full max-w-[320px] rounded-[8px] border border-[var(--color-border)] bg-[var(--color-bg-row)] px-3 py-2 text-[13px] text-[var(--color-fg)] placeholder:text-[var(--color-fg-faint)] focus:border-[var(--color-brand)] focus:outline-none"
+            className="w-full max-w-[320px] rounded-xl border border-slate-800 bg-slate-900/60 px-3.5 py-2 text-xs text-white placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none transition"
           />
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             {STATUS_FILTER_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 onClick={() => setStatus(opt.value)}
                 className={cn(
-                  "rounded-[8px] px-3 py-2 text-[12px] font-semibold transition-colors",
+                  "rounded-xl px-3 py-1.5 text-xs font-medium transition-all",
                   status === opt.value
-                    ? "bg-[var(--color-brand)] text-white"
-                    : "bg-[var(--color-bg-row)] text-[var(--color-fg-muted)] hover:bg-[var(--color-bg-card-soft)]"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800/60"
                 )}
               >
                 {opt.label}
@@ -92,43 +92,43 @@ export default function BondsPage() {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[820px] border-separate border-spacing-y-2 text-start">
               <thead>
-                <tr className="text-[11px] font-medium text-[var(--color-fg-faint)]">
-                  <th className="px-3 py-2 text-start font-medium">العميل</th>
-                  <th className="px-3 py-2 text-start font-medium">رقم السند</th>
-                  <th className="px-3 py-2 text-start font-medium">المبلغ (ر.س)</th>
-                  <th className="px-3 py-2 text-start font-medium">الإصدار</th>
-                  <th className="px-3 py-2 text-start font-medium">الاستحقاق</th>
-                  <th className="px-3 py-2 text-start font-medium">درجة الخطر</th>
-                  <th className="px-3 py-2 text-start font-medium">الحالة</th>
+                <tr className="text-xs font-medium text-slate-400">
+                  <th className="px-3.5 py-2 text-start font-medium">العميل</th>
+                  <th className="px-3.5 py-2 text-start font-medium">رقم السند</th>
+                  <th className="px-3.5 py-2 text-start font-medium">المبلغ (ر.س)</th>
+                  <th className="px-3.5 py-2 text-start font-medium">الإصدار</th>
+                  <th className="px-3.5 py-2 text-start font-medium">الاستحقاق</th>
+                  <th className="px-3.5 py-2 text-start font-medium">درجة الخطر</th>
+                  <th className="px-3.5 py-2 text-start font-medium">الحالة</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((bond) => (
-                  <tr key={bond.id} className="bg-[var(--color-bg-row)]">
-                    <td className="rounded-s-[10px] px-3 py-3 align-middle">
-                      <div className="flex items-center gap-[10px]">
+                  <tr key={bond.id} className="bg-slate-900/40 hover:bg-slate-800/40 transition-colors">
+                    <td className="rounded-s-xl px-3.5 py-3 align-middle border-y border-s border-slate-800/70">
+                      <div className="flex items-center gap-2.5">
                         <Avatar name={bond.clients?.name} />
-                        <p className="truncate text-[13px] font-semibold text-[var(--color-fg)]">
+                        <p className="truncate text-xs font-semibold text-white">
                           {bond.clients?.name || "—"}
                         </p>
                       </div>
                     </td>
-                    <td className="tabular px-3 py-3 align-middle text-[12px] whitespace-nowrap text-[var(--color-fg-subtle)]">
+                    <td className="tabular px-3.5 py-3 align-middle text-xs whitespace-nowrap text-slate-400 border-y border-slate-800/70">
                       {bond.bond_number}
                     </td>
-                    <td className="tabular px-3 py-3 align-middle text-[14px] font-semibold whitespace-nowrap text-[var(--color-fg)]">
+                    <td className="tabular px-3.5 py-3 align-middle text-xs font-semibold whitespace-nowrap text-white border-y border-slate-800/70">
                       {formatCurrencyAr(bond.amount)}
                     </td>
-                    <td className="tabular px-3 py-3 align-middle text-[12px] whitespace-nowrap text-[var(--color-fg-subtle)]">
+                    <td className="tabular px-3.5 py-3 align-middle text-xs whitespace-nowrap text-slate-400 border-y border-slate-800/70">
                       {formatDateAr(bond.issue_date)}
                     </td>
-                    <td className="tabular px-3 py-3 align-middle text-[12px] whitespace-nowrap text-[var(--color-fg-subtle)]">
+                    <td className="tabular px-3.5 py-3 align-middle text-xs whitespace-nowrap text-slate-400 border-y border-slate-800/70">
                       {formatDateAr(bond.due_date)}
                     </td>
-                    <td className="px-3 py-3 align-middle">
+                    <td className="px-3.5 py-3 align-middle border-y border-slate-800/70">
                       <RiskBadge score={bond.clients?.risk_score ?? 0} />
                     </td>
-                    <td className="rounded-e-[10px] px-3 py-3 align-middle">
+                    <td className="rounded-e-xl px-3.5 py-3 align-middle border-y border-e border-slate-800/70">
                       <StatusBadge bond={bond} />
                     </td>
                   </tr>

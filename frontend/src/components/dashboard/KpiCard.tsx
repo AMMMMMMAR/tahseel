@@ -3,16 +3,19 @@ import { cn } from "@/lib/utils";
 
 type KpiTone = "success" | "danger" | "neutral";
 
-const dotClasses: Record<KpiTone, string> = {
-  success: "bg-[var(--color-success)]",
-  danger: "bg-[var(--color-danger)]",
-  neutral: "bg-white",
-};
-
-const captionClasses: Record<KpiTone, string> = {
-  success: "text-[var(--color-success)]",
-  danger: "text-[var(--color-danger-strong)]",
-  neutral: "text-[var(--color-fg-subtle)]",
+const toneBadges: Record<KpiTone, { dot: string; caption: string }> = {
+  success: {
+    dot: "bg-emerald-400",
+    caption: "text-emerald-400 font-medium",
+  },
+  danger: {
+    dot: "bg-rose-400",
+    caption: "text-rose-400 font-medium",
+  },
+  neutral: {
+    dot: "bg-slate-400",
+    caption: "text-slate-400",
+  },
 };
 
 interface KpiCardProps {
@@ -30,30 +33,27 @@ export function KpiCard({
   caption,
   tone = "neutral",
 }: KpiCardProps) {
+  const currentTone = toneBadges[tone];
+
   return (
-    <Card className="flex h-[132px] w-full flex-col gap-[10px] overflow-clip px-[18px] pt-[10px] pb-[18px]">
+    <Card className="flex flex-col justify-between p-5 min-h-[140px] transition-all hover:border-slate-700/80">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-[12px] text-[var(--color-fg-subtle)]">{label}</p>
+        <span className="text-xs font-medium text-slate-400">{label}</span>
         <span
-          className={cn("size-[8px] shrink-0 rounded-full", dotClasses[tone])}
+          className={cn("size-2 rounded-full", currentTone.dot)}
         />
       </div>
-      <div className="flex items-baseline justify-start gap-[8px]">
-        <span className="tabular text-[28px] leading-none font-bold text-[var(--color-fg)]">
+      <div className="flex items-baseline gap-2 my-2">
+        <span className="tabular text-3xl font-bold tracking-tight text-white">
           {value}
         </span>
         {unit ? (
-          <span className="text-[13px] text-[var(--color-fg-subtle)]">
+          <span className="text-xs font-semibold text-slate-400">
             {unit}
           </span>
         ) : null}
       </div>
-      <p
-        className={cn(
-          "mt-auto text-start text-[11px] font-medium",
-          captionClasses[tone]
-        )}
-      >
+      <p className={cn("text-xs truncate", currentTone.caption)}>
         {caption}
       </p>
     </Card>

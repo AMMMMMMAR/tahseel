@@ -33,35 +33,29 @@ interface PriorityTableProps {
 
 export function PriorityTable({ bonds }: PriorityTableProps) {
   return (
-    <Card className="flex flex-col gap-3 p-[18px]">
+    <Card className="flex flex-col gap-3 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-col gap-[2px] text-start">
-          <h2 className="text-[16px] font-bold text-[var(--color-fg)]">
-            العملاء — قائمة الأولوية اليومية
+        <div className="flex flex-col gap-0.5 text-start">
+          <h2 className="text-sm font-bold text-white">
+            قائمة المتابعة ذات الأولوية
           </h2>
-          <p className="text-[11px] text-[var(--color-fg-subtle)]">
-            مرتّبة بحسب درجة الخطر التي حدّدها الوكيل الذكي
+          <p className="text-xs text-slate-400">
+            السندات المرتبة حسب درجة الخطر واستحقاق السداد
           </p>
         </div>
         <Link
           href="/bonds"
-          className="text-[12px] font-medium text-[var(--color-brand-soft)] hover:underline"
+          className="text-xs font-medium text-emerald-400 hover:text-emerald-300"
         >
-          عرض الكل ←
+          عرض كل السندات ←
         </Link>
       </div>
 
       <div className="overflow-x-auto">
         <div className="min-w-[820px]">
-          <div className={cn("grid items-center gap-[12px] px-[8px] py-2", GRID_COLS)}>
+          <div className={cn("grid items-center gap-3 px-3 py-2 text-xs text-slate-400 font-medium", GRID_COLS)}>
             {headers.map((h) => (
-              <p
-                key={h.label}
-                className={cn(
-                  "text-[11px] font-medium whitespace-nowrap text-[var(--color-fg-faint)]",
-                  h.align
-                )}
-              >
+              <p key={h.label} className={cn("whitespace-nowrap", h.align)}>
                 {h.label}
               </p>
             ))}
@@ -80,22 +74,22 @@ export function PriorityTable({ bonds }: PriorityTableProps) {
                   <div
                     key={bond.id}
                     className={cn(
-                      "grid items-center gap-[12px] rounded-[10px] bg-[var(--color-bg-row)] px-[12px] py-[12px]",
+                      "grid items-center gap-3 rounded-xl bg-slate-900/40 border border-slate-800/70 hover:border-slate-700/80 px-3.5 py-3 transition-colors",
                       GRID_COLS
                     )}
                   >
-                    <div className="flex items-center gap-[10px] min-w-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <Avatar name={bond.clients?.name} />
-                      <p className="truncate text-[13px] font-semibold text-[var(--color-fg)]">
+                      <p className="truncate text-xs font-semibold text-white">
                         {bond.clients?.name || "—"}
                       </p>
                     </div>
 
-                    <p className="tabular truncate text-[14px] font-semibold text-[var(--color-fg)]">
+                    <p className="tabular truncate text-xs font-semibold text-white">
                       {formatCurrencyAr(bond.amount)}
                     </p>
 
-                    <p className="tabular truncate text-[12px] text-[var(--color-fg-subtle)]">
+                    <p className="tabular truncate text-xs text-slate-400">
                       {formatDateAr(bond.due_date || bond.issue_date)}
                     </p>
 
@@ -107,16 +101,16 @@ export function PriorityTable({ bonds }: PriorityTableProps) {
                       <StatusBadge bond={bond} />
                     </div>
 
-                    <div className="flex items-center gap-[8px] min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
                       <span
                         className={cn(
-                          "flex size-[30px] shrink-0 items-center justify-center rounded-[8px] text-[14px] font-bold text-white",
+                          "flex size-6 shrink-0 items-center justify-center rounded-md text-xs font-bold text-white",
                           actionToneClasses[action.tone]
                         )}
                       >
                         ←
                       </span>
-                      <p className="truncate text-[12px] font-semibold text-[var(--color-fg)]">
+                      <p className="truncate text-xs font-medium text-slate-200">
                         {action.label}
                       </p>
                     </div>

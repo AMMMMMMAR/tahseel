@@ -128,6 +128,13 @@ export const api = {
   getAgentLogs: (limit: number = 50) => {
     return request<AgentLogsResponse>(`/api/agent/logs?limit=${limit}`);
   },
+
+  // Seed rich demo dataset for open source showcase
+  seedDemoData: () => {
+    return request<{ success: boolean; message: string; created_count: number }>("/api/seed", {
+      method: "POST",
+    });
+  },
 };
 
 export type ListBondsParams = Parameters<typeof api.listBonds>[0];

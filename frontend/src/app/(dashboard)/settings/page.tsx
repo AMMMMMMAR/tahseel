@@ -4,6 +4,8 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { useHealth } from "@/hooks/useBonds";
+import { GithubIcon } from "@/components/icons/GithubIcon";
+import { ShieldCheck, Sparkles, Terminal } from "lucide-react";
 
 export default function SettingsPage() {
   const { data, isLoading, isError } = useHealth();
@@ -17,40 +19,68 @@ export default function SettingsPage() {
   return (
     <>
       <PageHeader
-        title="الإعدادات"
-        subtitle="معلومات الشركة وحالة الاتصال بالخادم"
+        title="الإعدادات وبيئة التشغيل"
+        subtitle="معلومات النظام، حالة اتصال الخادم، وروابط مستودع المصدر المفتوح"
       />
 
-      <div className="grid gap-[14px] lg:grid-cols-2">
-        <Card className="flex flex-col gap-3 p-[18px] text-start">
-          <h2 className="text-[16px] font-bold text-[var(--color-fg)]">
-            بيانات الشركة
-          </h2>
-          <Row label="اسم الشركة" value={company} />
-          <Row label="مدير التحصيل" value={`${userName} · ${userRole}`} />
-          <p className="mt-2 text-[11px] text-[var(--color-fg-faint)]">
-            يمكن تعديل هذه القيم من ملف <span className="tabular">.env.local</span>.
+      <div className="grid gap-5 lg:grid-cols-2">
+        {/* Company & Profile Info */}
+        <Card className="flex flex-col gap-3 p-5 text-start">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+              <ShieldCheck size={18} />
+            </span>
+            <h2 className="text-sm font-bold text-white">
+              بيانات الحساب والجهة
+            </h2>
+          </div>
+          <Row label="الجهة التجارية" value={company} />
+          <Row label="مسؤول التحصيل" value={`${userName} · ${userRole}`} />
+          <p className="mt-2 text-xs text-slate-500">
+            يمكن تخصيص هذه المعطيات عبر متغيرات البيئة في ملف <span className="font-mono text-slate-400">.env</span>.
           </p>
         </Card>
 
-        <Card className="flex flex-col gap-3 p-[18px] text-start">
-          <h2 className="text-[16px] font-bold text-[var(--color-fg)]">
-            الاتصال بالخادم
-          </h2>
-          <Row label="عنوان API" value={apiBase} mono />
+        {/* Server Health */}
+        <Card className="flex flex-col gap-3 p-5 text-start">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400">
+              <Terminal size={18} />
+            </span>
+            <h2 className="text-sm font-bold text-white">
+              حالة اتصال الخادم (Backend API)
+            </h2>
+          </div>
+          <Row label="عنوان الخادم" value={apiBase} mono />
           <Row
-            label="حالة الخادم"
+            label="حالة الاتصال"
             value={
               isLoading ? (
                 <Badge tone="neutral">جاري الفحص…</Badge>
               ) : isError ? (
-                <Badge tone="high">غير متاح</Badge>
+                <Badge tone="danger">غير متصل</Badge>
               ) : (
-                <Badge tone="success">{data?.status ?? "ok"}</Badge>
+                <Badge tone="success">متصل بنجاح ({data?.status ?? "ok"})</Badge>
               )
             }
           />
-          <Row label="اسم الخدمة" value={data?.service ?? "—"} mono />
+          <Row label="معرّف الخدمة" value={data?.service ?? "tahseel-backend"} mono />
+        </Card>
+
+        {/* Open Source Project Details (Full width) */}
+        <Card className="lg:col-span-2 flex flex-col gap-3 p-5 text-start">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400">
+              <GithubIcon className="size-4.5" />
+            </span>
+            <h2 className="text-sm font-bold text-white">
+              مشروع تحصيل مفتوح المصدر (Open Source Project)
+            </h2>
+          </div>
+          <Row label="المستودع الرئيسي" value="github.com/AMMMMMMAR/tahseel" mono />
+          <Row label="الترخيص البرمجي" value="MIT License (مفتوح المصدر)" />
+          <Row label="حزمة الذكاء الاصطناعي" value="Google Gemini 2.5 Flash + LangGraph StateGraph" mono />
+          <Row label="قاعدة البيانات" value="SQLite (محلية وسريعة بدون إعدادات)" />
         </Card>
       </div>
     </>
@@ -67,11 +97,11 @@ function Row({
   mono?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-t border-[var(--color-border)] pt-3 first:border-0 first:pt-0">
-      <span className="text-[12px] text-[var(--color-fg-subtle)]">{label}</span>
+    <div className="flex items-center justify-between gap-3 border-t border-slate-800/80 pt-3 first:border-0 first:pt-0">
+      <span className="text-xs text-slate-400">{label}</span>
       <span
-        className={`text-[13px] font-semibold text-[var(--color-fg)] ${
-          mono ? "tabular" : ""
+        className={`text-xs font-semibold text-white ${
+          mono ? "font-mono" : ""
         }`}
       >
         {value}

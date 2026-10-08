@@ -11,7 +11,7 @@ The benchmark tests **20 synthetic Arabic debt scenarios** to mathematically ver
 | **Financial Anti-Hallucination** | 100% | **100.0%** | ✅ PASSED |
 | **Regulatory & Tone Compliance** | >= 95% | **100.0%** | ✅ PASSED |
 | **Total Scenarios Evaluated** | 20 | **20** | ✅ COMPLETED |
-| **Benchmark Duration** | < 1.0s | **0.18 ms** | ⚡ ULTRA-FAST |
+| **Benchmark Duration** | < 1.0s | **0.24 ms** | ⚡ ULTRA-FAST |
 
 ---
 

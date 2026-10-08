@@ -59,13 +59,21 @@ export interface AgentRunResponse {
 export interface AgentLog {
   id: string;
   executed_at: string;
-  bond_id: string;
+  bond_id: string | null;
+  bond_number?: string | null;
+  client_name?: string | null;
   action_type: string;
   details?: {
     to?: string;
+    recipient?: string;
+    email?: string;
+    level?: number;
+    label?: string;
+    amount?: number;
     tone?: string;
     days_overdue?: number;
     message?: string;
+    summary?: string;
     updated_count?: number;
     high_risk_count?: number;
     threshold?: number;

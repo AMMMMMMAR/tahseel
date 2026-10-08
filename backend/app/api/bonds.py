@@ -110,3 +110,68 @@ async def list_bonds(
         b_dict["clients"] = b.client.model_dump() if b.client else None
         response_bonds.append(b_dict)
     return {"bonds": response_bonds, "count": len(response_bonds)}
+
+
+@router.post("/seed", summary="شحن بيانات تجريبية (Open Source Demo Seed)")
+async def seed_demo_data(session: Session = Depends(get_session)):
+    """
+    Seeds a rich realistic dataset for open-source evaluation and local demonstration.
+    """
+    demo_samples = [
+        {
+            "رقم_السند": "BOND-2026-081",
+            "تاريخ_الاصدار": "2026-02-01",
+            "اسم_العميل": "شركة الأفق التجارية",
+            "رقم_الهاتف": "0501234567",
+            "ايميل_العميل": "accounts@alofooq.sa",
+            "المبلغ": "38500",
+            "وصف_سبب_الصرف": "توريد تجهيزات مكتبية وتقنية",
+        },
+        {
+            "رقم_السند": "BOND-2026-SA01",
+            "تاريخ_الاصدار": "2026-01-15",
+            "اسم_العميل": "شركة اليمامة للتطوير العقاري",
+            "رقم_الهاتف": "0501122334",
+            "ايميل_العميل": "finance@yamama-realestate.sa",
+            "المبلغ": "55000",
+            "وصف_سبب_الصرف": "دفعة أعمال تشطيبات الواجهات الخارجية",
+        },
+        {
+            "رقم_السند": "BOND-2026-MD02",
+            "تاريخ_الاصدار": "2025-12-20",
+            "اسم_العميل": "مؤسسة الفارس للمقاولات",
+            "رقم_الهاتف": "0559988776",
+            "ايميل_العميل": "alfares@contracting.sa",
+            "المبلغ": "82400",
+            "وصف_سبب_الصرف": "توريد حديد تسليح وخرسانة مسلحة",
+        },
+        {
+            "رقم_السند": "BOND-2026-LG03",
+            "تاريخ_الاصدار": "2026-02-28",
+            "اسم_العميل": "شركة النور للخدمات اللوجستية",
+            "رقم_الهاتف": "0543322110",
+            "ايميل_العميل": "ops@alnoor-logistics.sa",
+            "المبلغ": "24000",
+            "وصف_سبب_الصرف": "خدمات نقل وشحن بضائع مبردة",
+        },
+        {
+            "رقم_السند": "BOND-2026-MD04",
+            "تاريخ_الاصدار": "2026-01-05",
+            "اسم_العميل": "شركة مدار الخليج للتقنية",
+            "رقم_الهاتف": "0567788990",
+            "ايميل_العميل": "billing@madar-tech.sa",
+            "المبلغ": "45000",
+            "وصف_سبب_الصرف": "تراخيص أنظمة سحابية وتطوير برمجيات",
+        },
+    ]
+
+    created = []
+    for item in demo_samples:
+        saved = BondRepository.save_bond_from_ocr(session, item)
+        created.append(saved.id)
+
+    return {
+        "success": True,
+        "message": "تم شحن البيانات التجريبية بنجاح",
+        "created_count": len(created),
+    }

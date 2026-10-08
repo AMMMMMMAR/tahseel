@@ -126,25 +126,25 @@ export default function ReportsPage() {
             />
           </section>
 
-          <Card className="flex flex-col gap-3 p-[18px]">
-            <h2 className="text-start text-[16px] font-bold text-[var(--color-fg)]">
+          <Card className="flex flex-col gap-4 p-5">
+            <h2 className="text-start text-sm font-bold text-white">
               توزّع السندات حسب الحالة
             </h2>
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
               {buckets.map((b) => (
                 <div
                   key={b.status}
-                  className="flex flex-col gap-2 rounded-[10px] bg-[var(--color-bg-row)] p-4 text-start"
+                  className="flex flex-col gap-2 rounded-xl bg-slate-900/50 border border-slate-800/80 p-4 text-start transition-colors hover:border-slate-700/80"
                 >
                   <div className="flex">
                     <Badge tone={b.tone} pill>
                       {b.label}
                     </Badge>
                   </div>
-                  <p className="tabular text-[24px] font-bold text-[var(--color-fg)]">
+                  <p className="tabular text-2xl font-bold text-white">
                     {formatNumberAr(b.count)}
                   </p>
-                  <p className="tabular text-[12px] text-[var(--color-fg-subtle)]">
+                  <p className="tabular text-xs text-slate-400">
                     {formatCurrencyAr(b.total)} ر.س
                   </p>
                 </div>
@@ -152,12 +152,12 @@ export default function ReportsPage() {
             </div>
           </Card>
 
-          <Card className="flex flex-col gap-3 p-[18px]">
-            <h2 className="text-start text-[16px] font-bold text-[var(--color-fg)]">
-              آخر السندات المسوّاة
+          <Card className="flex flex-col gap-4 p-5">
+            <h2 className="text-start text-sm font-bold text-white">
+              آخر السندات المسوّاة بنجاح
             </h2>
             {recentSettled.length === 0 ? (
-              <p className="py-6 text-center text-[12px] text-[var(--color-fg-subtle)]">
+              <p className="py-6 text-center text-xs text-slate-500">
                 لا توجد سندات مسوّاة بعد.
               </p>
             ) : (
@@ -165,17 +165,17 @@ export default function ReportsPage() {
                 {recentSettled.map((b) => (
                   <li
                     key={b.id}
-                    className="flex items-center justify-between gap-3 rounded-[10px] bg-[var(--color-bg-row)] px-3 py-3"
+                    className="flex items-center justify-between gap-3 rounded-xl bg-slate-900/40 border border-slate-800/70 px-4 py-3 hover:border-slate-700/80 transition-colors"
                   >
                     <div className="flex min-w-0 flex-col text-start">
-                      <p className="truncate text-[13px] font-semibold text-[var(--color-fg)]">
+                      <p className="truncate text-xs font-semibold text-white">
                         {b.clients?.name || "—"}
                       </p>
-                      <p className="tabular truncate text-[11px] text-[var(--color-fg-subtle)]">
-                        {b.bond_number}
+                      <p className="tabular truncate text-[11px] text-slate-400">
+                        سند رقم: {b.bond_number}
                       </p>
                     </div>
-                    <span className="tabular shrink-0 text-[13px] font-semibold text-[var(--color-fg)]">
+                    <span className="tabular shrink-0 text-xs font-bold text-emerald-400">
                       {formatCurrencyAr(b.amount)} ر.س
                     </span>
                   </li>
@@ -201,22 +201,22 @@ function SummaryStat({
   tone?: "success" | "danger";
 }) {
   return (
-    <Card className="flex flex-col gap-2 p-[18px] text-start">
-      <p className="text-[12px] text-[var(--color-fg-subtle)]">{label}</p>
+    <Card className="flex flex-col gap-2 p-5 text-start hover:border-slate-700/80 transition-all">
+      <p className="text-xs text-slate-400">{label}</p>
       <div className="flex items-baseline justify-start gap-2">
         <span
-          className={`tabular text-[24px] font-bold ${
+          className={`tabular text-2xl font-bold tracking-tight ${
             tone === "success"
-              ? "text-[var(--color-success)]"
+              ? "text-emerald-400"
               : tone === "danger"
-                ? "text-[var(--color-danger-bright)]"
-                : "text-[var(--color-fg)]"
+                ? "text-rose-400"
+                : "text-white"
           }`}
         >
           {value}
         </span>
         {unit ? (
-          <span className="text-[12px] text-[var(--color-fg-subtle)]">
+          <span className="text-xs font-semibold text-slate-400">
             {unit}
           </span>
         ) : null}
