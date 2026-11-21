@@ -3,7 +3,7 @@
 > منظومة مفتوحة المصدر لأتمتة فحص ومتابعة السندات التجارية وإدارة التحصيل المالي الذاتي.
 
 [![CI Pipeline](https://github.com/AMMMMMMAR/tahseel/actions/workflows/ci.yml/badge.svg)](https://github.com/AMMMMMMAR/tahseel/actions/workflows/ci.yml)
-[![الترخيص: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
+[![الترخيص: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
 [![بايثون](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://python.org)
 [![Next.js](https://img.shields.io/badge/Next.js-16_(Turbopack)-black?logo=next.js&logoColor=white)](https://nextjs.org)
 [![LangGraph](https://img.shields.io/badge/محرك_الوكيل-LangGraph_StateGraph-1C3C3C)](https://langchain-ai.github.io/langgraph/)
@@ -157,5 +157,5 @@ npm run build
 
 ## الترخيص القانوني (License)
 
-هذا المشروع مرخص بموجب رخصة [MIT License](LICENSE) مفتوحة المصدر بالكامل.
+هذا المشروع مرخص بموجب رخصة [MIT License](https://opensource.org/licenses/MIT) مفتوحة المصدر بالكامل.
 

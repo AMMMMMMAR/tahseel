@@ -3,7 +3,7 @@
 > Autonomous Arabic Financial Document Processing & Intelligent Debt Collection Engine.
 
 [![CI Pipeline](https://github.com/AMMMMMMAR/tahseel/actions/workflows/ci.yml/badge.svg)](https://github.com/AMMMMMMAR/tahseel/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://python.org)
 [![Next.js](https://img.shields.io/badge/Next.js-16_(Turbopack)-black?logo=next.js&logoColor=white)](https://nextjs.org)
 [![LangGraph](https://img.shields.io/badge/Agent-LangGraph_StateGraph-1C3C3C)](https://langchain-ai.github.io/langgraph/)
@@ -202,4 +202,4 @@ Contributions, issues, and feature requests are welcome! Please check [CONTRIBUT
 
 ## License
 
-This project is licensed under the terms of the [MIT License](LICENSE).
+This project is licensed under the terms of the [MIT License](https://opensource.org/licenses/MIT).
