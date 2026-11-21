@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 import os
 from typing import Optional
 
@@ -7,6 +8,8 @@ from google import genai
 from google.genai import types
 from PIL import Image
 from sqlmodel import Session
+
+logger = logging.getLogger(__name__)
 
 from app.core.normalization import clean_amount, normalize_arabic_numbers, normalize_date
 from app.models.bond import Bond

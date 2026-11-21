@@ -6,6 +6,11 @@ export interface ClientSummary {
   email?: string | null;
   phone?: string | null;
   risk_score?: number | null;
+  policy_tier?: "standard" | "vip" | "strict" | null;
+  custom_grace_days?: number | null;
+  preferred_installments?: number | null;
+  max_escalation_level?: number | null;
+  custom_notes?: string | null;
 }
 
 export interface Bond {
@@ -113,9 +118,29 @@ export interface AggregatedClient {
   email: string | null;
   phone: string | null;
   risk_score: number;
+  policy_tier?: "standard" | "vip" | "strict";
+  custom_grace_days?: number;
+  preferred_installments?: number | null;
+  max_escalation_level?: number | null;
+  custom_notes?: string | null;
   bonds_count: number;
   total_amount: number;
   outstanding_amount: number;
   overdue_count: number;
   last_bond_date: string | null;
 }
+
+export interface CollectionPolicy {
+  id: string;
+  company_name: string;
+  friendly_reminder_days: number;
+  official_followup_days: number;
+  legal_warning_days: number;
+  enable_installment_plans: boolean;
+  default_installments_count: number;
+  allow_auto_legal_notice: boolean;
+  communication_tone: "balanced" | "friendly" | "firm";
+  custom_prompt_notes: string;
+  updated_at?: string;
+}
+

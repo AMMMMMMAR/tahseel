@@ -9,6 +9,7 @@ load_dotenv()
 from app.api.agent import router as agent_router
 from app.api.bonds import router as bonds_router
 from app.api.notifications import router as notifications_router
+from app.api.policy import router as policy_router
 from app.api.websocket import router as ws_router
 from app.core.db import init_db
 
@@ -38,6 +39,7 @@ app.add_middleware(
 app.include_router(bonds_router)
 app.include_router(agent_router)
 app.include_router(notifications_router)
+app.include_router(policy_router)
 app.include_router(ws_router)
 
 

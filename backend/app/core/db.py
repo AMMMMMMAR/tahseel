@@ -39,6 +39,23 @@ def init_db() -> None:
     import app.models  # noqa: F401
     SQLModel.metadata.create_all(engine)
 
+    # Safe migration for new client columns in existing SQLite DB
+    from sqlmodel import text
+    with Session(engine) as session:
+        for query in [
+            "ALTER TABLE clients ADD COLUMN policy_tier TEXT DEFAULT 'standard'",
+            "ALTER TABLE clients ADD COLUMN custom_grace_days INTEGER DEFAULT 0",
+            "ALTER TABLE clients ADD COLUMN preferred_installments INTEGER DEFAULT NULL",
+            "ALTER TABLE clients ADD COLUMN max_escalation_level INTEGER DEFAULT NULL",
+            "ALTER TABLE clients ADD COLUMN custom_notes TEXT DEFAULT ''",
+        ]:
+            try:
+                session.exec(text(query))
+                session.commit()
+            except Exception:
+                # Column already exists
+                pass
+
 
 def get_session() -> Generator[Session, None, None]:
     """Dependency for yielding database sessions in FastAPI routes."""

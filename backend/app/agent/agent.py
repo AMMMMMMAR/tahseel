@@ -122,6 +122,11 @@ def draft_and_dispatch_node(state: AgentState) -> Dict[str, Any]:
                 description=item.get("description", ""),
                 bond_number=item.get("bond_number", ""),
                 risk_score=item.get("risk_score", 50.0),
+                policy_tier=item.get("policy_tier", "standard"),
+                custom_grace_days=item.get("custom_grace_days", 0),
+                preferred_installments=item.get("preferred_installments"),
+                max_escalation_level=item.get("max_escalation_level"),
+                custom_notes=item.get("custom_notes", ""),
             )
             dispatched.append(res)
             emit_agent_event("notification_dispatched", {

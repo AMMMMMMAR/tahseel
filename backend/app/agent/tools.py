@@ -11,10 +11,12 @@ from sqlmodel import Session, select
 from app.core.db import get_db_session
 from app.models.bond import Bond
 from app.models.client import Client
+from app.models.policy import CollectionPolicy
 from app.repositories.action_repo import ActionRepository
 from app.repositories.bond_repo import BondRepository
 from app.repositories.client_repo import ClientRepository
 from app.repositories.notification_repo import NotificationRepository
+from app.repositories.policy_repo import PolicyRepository
 
 logger = logging.getLogger(__name__)
 
@@ -31,14 +33,14 @@ def determine_escalation_strategy(
     risk_score: float,
     is_disputed: bool = False,
     is_settled: bool = False,
+    policy: Optional[CollectionPolicy] = None,
+    policy_tier: str = "standard",
+    custom_grace_days: int = 0,
+    max_escalation_level: Optional[int] = None,
 ) -> Dict[str, Any]:
     """
-    Determines 4-tier collection escalation strategy with safety guardrails:
-    - Level 0: Skipped / Frozen (Settled account or disputed claim)
-    - Level 1: Friendly Courtesy (Days overdue <= 0 or risk < 40)
-    - Level 2: Official Follow-Up (Days overdue 1-14 or risk 40-70)
-    - Level 3: Urgent Warning & Payment Plan (Days overdue 15-30 or risk 70-85)
-    - Level 4: Final Legal Notice (Days overdue > 30 or risk > 85)
+    Determines collection escalation strategy dynamically based on company CollectionPolicy
+    and per-client agreement terms (Standard, VIP, Strict, custom grace days, max escalation cap).
     """
     if is_settled:
         return {
@@ -56,24 +58,57 @@ def determine_escalation_strategy(
             "tone": "تجميد المتابعة وإحالة للوساطة القانونية",
             "action_required": "تم إيقاف التذكيرات الآلية مؤقتاً لحين فض النزاع التجاري.",
         }
-    if days_overdue > 30 or risk_score >= 85:
-        return {
-            "level": 4,
-            "label": "إنذار قانوني نهائي",
-            "urgency": "legal_notice",
-            "tone": "إنذار نهائي قبل الإجراءات القضائية والتنفيذ عبر منصة ناجز",
-            "action_required": "السداد خلال 48 ساعة لتفادي اتخاذ الإجراءات النظامية والقضائية.",
-        }
-    elif days_overdue >= 15 or risk_score >= 70:
-        return {
+
+    # Effective overdue days after subtracting custom client grace agreement
+    effective_overdue = max(0, days_overdue - (custom_grace_days or 0))
+
+    # Read company thresholds (or default standard limits)
+    friendly_limit = policy.friendly_reminder_days if policy else 1
+    followup_limit = policy.official_followup_days if policy else 15
+    legal_limit = policy.legal_warning_days if policy else 30
+    allow_auto_legal = policy.allow_auto_legal_notice if policy else True
+
+    # Adjust rules for client policy tiers
+    if policy_tier == "vip":
+        # VIP Guardrail: Never send legal escalation; always maintain polite executive communication
+        allow_auto_legal = False
+        legal_limit = 999
+        followup_limit = max(followup_limit, 30)
+    elif policy_tier == "strict":
+        # Strict tier: Halve the thresholds for early escalation
+        followup_limit = max(1, followup_limit // 2)
+        legal_limit = max(7, legal_limit // 2)
+
+    # Escalation Ladder
+    if effective_overdue > legal_limit or (risk_score >= 85 and policy_tier != "vip"):
+        if allow_auto_legal and policy_tier != "vip":
+            raw_result = {
+                "level": 4,
+                "label": "إنذار قانوني نهائي",
+                "urgency": "legal_notice",
+                "tone": "إنذار نهائي قبل الإجراءات القضائية والتنفيذ عبر منصة ناجز",
+                "action_required": "السداد خلال 48 ساعة لتفادي اتخاذ الإجراءات النظامية والقضائية.",
+            }
+        else:
+            raw_result = {
+                "level": 3,
+                "label": "متابعة خاصة رفيعة المستوى (VIP)",
+                "urgency": "urgent",
+                "tone": "متابعة خاصة من مدير الحسابات والوساطة الودية",
+                "action_required": "مراجعة خاصة مع الإدارة المالية لبحث تسهيلات السداد.",
+            }
+    elif effective_overdue >= followup_limit or risk_score >= 70:
+        enable_installments = policy.enable_installment_plans if policy else True
+        label = "تنبيه عاجل مع خطة سداد" if enable_installments else "تنبيه مالي عاجل"
+        raw_result = {
             "level": 3,
-            "label": "تنبيه عاجل مع خطة سداد",
+            "label": label,
             "urgency": "urgent",
             "tone": "عاجل مع مقترح جدولة السداد",
             "action_required": "يرجى تسوية المستحقات أو اعتماد مقترح جدولة السداد على 3 دفعات ميسرة.",
         }
-    elif days_overdue >= 1 or risk_score >= 40:
-        return {
+    elif effective_overdue >= friendly_limit or risk_score >= 40:
+        raw_result = {
             "level": 2,
             "label": "متابعة مالية رسمية",
             "urgency": "official",
@@ -81,13 +116,34 @@ def determine_escalation_strategy(
             "action_required": "يرجى تأكيد موعد التحويل البنكي وإرسال إشعار السداد لفريق المحاسبة.",
         }
     else:
-        return {
+        raw_result = {
             "level": 1,
             "label": "تذكير استباقي ودي",
             "urgency": "friendly",
             "tone": "ودي واستشاري قبل موعد الاستحقاق",
             "action_required": "تذكير بموعد الاستحقاق القادم، مع كامل تقديرنا لشراكتكم الدائمة.",
         }
+
+    # Respect client contractual max escalation cap if set
+    if max_escalation_level is not None and raw_result["level"] > max_escalation_level:
+        if max_escalation_level == 3:
+            raw_result = {
+                "level": 3,
+                "label": "متابعة خاصة (سقف التعاقد)",
+                "urgency": "urgent",
+                "tone": "متابعة خاصة تلتزم بسقف الاتفاقية المعتمدة",
+                "action_required": "مراجعة مع الإدارة المالية لتسوية الدفعات.",
+            }
+        elif max_escalation_level <= 2:
+            raw_result = {
+                "level": 2,
+                "label": "متابعة رسمية (سقف التعاقد)",
+                "urgency": "official",
+                "tone": "متابعة رسمية دون تصعيد قضائي وفق الاتفاقية",
+                "action_required": "تأكيد التحويل البنكي وفق الاتفاق.",
+            }
+
+    return raw_result
 
 
 def generate_reminder_message(
@@ -99,13 +155,23 @@ def generate_reminder_message(
     risk_score: float = 50.0,
     is_disputed: bool = False,
     is_settled: bool = False,
+    policy: Optional[CollectionPolicy] = None,
+    policy_tier: str = "standard",
+    custom_grace_days: int = 0,
+    preferred_installments: Optional[int] = None,
+    max_escalation_level: Optional[int] = None,
+    custom_notes: str = "",
 ) -> Dict[str, Any]:
-    """Generates the structured Arabic reminder copy and escalation strategy."""
+    """Generates dynamic, policy-aligned Arabic reminder copy and escalation strategy."""
     strategy = determine_escalation_strategy(
         days_overdue=days_overdue,
         risk_score=risk_score,
         is_disputed=is_disputed,
         is_settled=is_settled,
+        policy=policy,
+        policy_tier=policy_tier,
+        custom_grace_days=custom_grace_days,
+        max_escalation_level=max_escalation_level,
     )
     level = strategy["level"]
     label = strategy["label"]
@@ -119,6 +185,7 @@ def generate_reminder_message(
             "label": label,
         }
 
+    company = policy.company_name if policy else "منصة تحصيل"
     salutation = f"السيد/ة {client_name} المحترم/ة،"
     amount_str = f"{amount:,.2f} ر.س"
     bond_ref = f" (سند رقم: {bond_number})" if bond_number else ""
@@ -131,17 +198,28 @@ def generate_reminder_message(
             f"نحيطكم علماً بأنه سيتم رفع السند التنفيذي إلى الدائرة القضائية المختصة عبر منصة ناجز خلال 48 ساعة "
             f"في حال عدم إتمام السداد الفوري.\n\n"
             f"{action_req}\n\n"
-            f"الإدارة القانونية والتحصيل — منصة تحصيل"
+            f"الإدارة القانونية والتحصيل — {company}"
         )
     elif level == 3:
-        installment_val = amount / 3.0
+        # Use client's preferred installments if agreed, otherwise company default
+        enable_installments = (preferred_installments is not None and preferred_installments > 1) or (policy.enable_installment_plans if policy else True)
+        installments = preferred_installments if (preferred_installments and preferred_installments > 1) else (policy.default_installments_count if policy else 3)
+        installment_val = amount / float(installments)
+
+        if enable_installments:
+            installment_text = (
+                f"تقديراً لشراكتكم، يسعدنا أن نعرض عليكم إمكانية جدولة المبلغ "
+                f"على {installments} دفعات شهرية ميسرة بقيمة ({installment_val:,.2f} ر.س شهرياً)."
+            )
+        else:
+            installment_text = "نحثكم على سرعة التواصل معنا لترتيب آلية سداد سريعة ومناسبة."
+
         body = (
             f"{salutation}\n\n"
             f"تنبيه عاجل بخصوص المستحقات المالية بمبلغ {amount_str}{bond_ref} المتعلقة بـ {description}.\n\n"
-            f"المبلغ متأخر منذ {days_overdue} يوماً. تقديراً لشراكتكم، يسعدنا أن نعرض عليكم إمكانية جدولة المبلغ "
-            f"على 3 دفعات شهرية ميسرة بقيمة ({installment_val:,.2f} ر.س شهرياً).\n\n"
+            f"المبلغ متأخر منذ {days_overdue} يوماً. {installment_text}\n\n"
             f"{action_req}\n\n"
-            f"فريق التحصيل المالي — منصة تحصيل"
+            f"فريق التحصيل المالي — {company}"
         )
     elif level == 2:
         body = (
@@ -149,7 +227,7 @@ def generate_reminder_message(
             f"تحية طيبة، نود متابعة الفاتورة المستحقة بمبلغ {amount_str}{bond_ref} الخاصة بـ {description}.\n\n"
             f"{action_req}\n\n"
             f"شاكرين لكم حسن تعاونكم الدائم.\n"
-            f"قسم الحسابات — منصة تحصيل"
+            f"قسم الحسابات — {company}"
         )
     else:
         body = (
@@ -157,8 +235,14 @@ def generate_reminder_message(
             f"تحية طيبة، نود تذكيركم بموعد استحقاق السند المالي بمبلغ {amount_str}{bond_ref} بخصوص {description}.\n\n"
             f"{action_req}\n\n"
             f"مع أطيب التحيات،\n"
-            f"فريق خدمة العملاء — منصة تحصيل"
+            f"فريق خدمة العملاء — {company}"
         )
+
+    # Append custom prompt notes if specified in company policy or client terms
+    if policy and policy.custom_prompt_notes:
+        body += f"\n\nملاحظة: {policy.custom_prompt_notes}"
+    if custom_notes:
+        body += f"\n(بند الاتفاقية: {custom_notes})"
 
     return {
         "strategy": strategy,
@@ -240,16 +324,31 @@ def analyze_and_update_risks_sync(session: Session) -> Dict[str, Any]:
 
 
 def get_high_risk_bonds_sync(session: Session, threshold: float = 70.0) -> List[Dict[str, Any]]:
-    """Fetches active bonds with debtor risk scores exceeding the threshold."""
+    """Fetches active bonds evaluated against the company policy and debtor terms."""
     active_bonds = BondRepository.list_active_bonds(session)
+    policy = PolicyRepository.get_policy(session)
     high_risk_list: List[Dict[str, Any]] = []
 
     for bond in active_bonds:
         client = ClientRepository.get_client(session, bond.client_id) if bond.client_id else None
         risk_score = client.risk_score if client else 0.0
+        policy_tier = getattr(client, "policy_tier", "standard") if client else "standard"
+        custom_grace = getattr(client, "custom_grace_days", 0) if client else 0
+        preferred_installments = getattr(client, "preferred_installments", None) if client else None
+        max_escalation_level = getattr(client, "max_escalation_level", None) if client else None
+        custom_notes = getattr(client, "custom_notes", "") if client else ""
 
-        if risk_score >= threshold or bond.days_overdue > 0:
-            strategy = determine_escalation_strategy(bond.days_overdue, risk_score)
+        effective_days = max(0, bond.days_overdue - (custom_grace or 0))
+
+        if risk_score >= threshold or effective_days > 0 or bond.days_overdue > 0:
+            strategy = determine_escalation_strategy(
+                days_overdue=bond.days_overdue,
+                risk_score=risk_score,
+                policy=policy,
+                policy_tier=policy_tier,
+                custom_grace_days=custom_grace,
+                max_escalation_level=max_escalation_level,
+            )
             high_risk_list.append({
                 "bond_id": bond.id,
                 "bond_number": bond.bond_number,
@@ -261,6 +360,11 @@ def get_high_risk_bonds_sync(session: Session, threshold: float = 70.0) -> List[
                 "days_overdue": bond.days_overdue,
                 "risk_score": risk_score,
                 "description": bond.description,
+                "policy_tier": policy_tier,
+                "custom_grace_days": custom_grace,
+                "preferred_installments": preferred_installments,
+                "max_escalation_level": max_escalation_level,
+                "custom_notes": custom_notes,
                 "strategy": strategy,
             })
 
@@ -273,7 +377,7 @@ def get_high_risk_bonds_sync(session: Session, threshold: float = 70.0) -> List[
         details={
             "high_risk_count": len(high_risk_list),
             "threshold": threshold,
-            "message": f"تم اكتشاف {len(high_risk_list)} حالة تتطلب المتابعة والتحصيل.",
+            "message": f"تم اكتشاف {len(high_risk_list)} حالة تتطلب المتابعة والتحصيل وفق سياسة الشركة.",
         },
     )
 
@@ -292,9 +396,14 @@ def send_smart_reminder_sync(
     risk_score: float = 50.0,
     is_disputed: bool = False,
     is_settled: bool = False,
+    policy_tier: str = "standard",
+    custom_grace_days: int = 0,
+    preferred_installments: Optional[int] = None,
+    max_escalation_level: Optional[int] = None,
+    custom_notes: str = "",
 ) -> Dict[str, Any]:
     """
-    Generates personalized Arabic copy based on escalation level,
+    Generates personalized Arabic copy based on policy escalation level and client agreement,
     records in NotificationRepository, sends via Resend if available,
     and logs action.
     """
@@ -302,6 +411,8 @@ def send_smart_reminder_sync(
 
     resend_api_key = os.getenv("RESEND_API_KEY", "")
     from_email = os.getenv("FROM_EMAIL", "collections@tahseel.sa")
+
+    policy = PolicyRepository.get_policy(session)
 
     msg_data = generate_reminder_message(
         client_name=client_name,
@@ -312,6 +423,12 @@ def send_smart_reminder_sync(
         risk_score=risk_score,
         is_disputed=is_disputed,
         is_settled=is_settled,
+        policy=policy,
+        policy_tier=policy_tier,
+        custom_grace_days=custom_grace_days,
+        preferred_installments=preferred_installments,
+        max_escalation_level=max_escalation_level,
+        custom_notes=custom_notes,
     )
 
     strategy = msg_data["strategy"]

@@ -8,6 +8,7 @@ import type {
   UploadBondResponse,
   AgentRunResponse,
   AgentLogsResponse,
+  CollectionPolicy,
 } from "./types";
 
 export interface OcrOnlyResponse {
@@ -133,6 +134,40 @@ export const api = {
   seedDemoData: () => {
     return request<{ success: boolean; message: string; created_count: number }>("/api/seed", {
       method: "POST",
+    });
+  },
+
+  // Company Collection Policy
+  getPolicy: () => {
+    return request<CollectionPolicy>("/api/policy");
+  },
+
+  updatePolicy: (updates: Partial<CollectionPolicy>) => {
+    return request<CollectionPolicy>("/api/policy", {
+      method: "PUT",
+      body: JSON.stringify(updates),
+    });
+  },
+
+  resetPolicy: () => {
+    return request<CollectionPolicy>("/api/policy/reset", {
+      method: "POST",
+    });
+  },
+
+  updateClientPolicy: (
+    clientId: string,
+    payload: {
+      policy_tier: string;
+      custom_grace_days?: number;
+      preferred_installments?: number | null;
+      max_escalation_level?: number | null;
+      custom_notes?: string | null;
+    }
+  ) => {
+    return request<{ success: boolean; message: string }>("/api/policy/clients/" + clientId, {
+      method: "PUT",
+      body: JSON.stringify(payload),
     });
   },
 };
