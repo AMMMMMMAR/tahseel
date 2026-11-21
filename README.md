@@ -1,307 +1,205 @@
-# Tahseel (تحصيل) — نظام تحصيل الديون والذكاء المالي
+# Tahseel (تحصيل)
+
+> Autonomous Arabic Financial Document Processing & Intelligent Debt Collection Engine.
 
 [![CI Pipeline](https://github.com/AMMMMMMAR/tahseel/actions/workflows/ci.yml/badge.svg)](https://github.com/AMMMMMMAR/tahseel/actions/workflows/ci.yml)
-![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED?logo=docker&logoColor=white)
-![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://python.org)
+[![Next.js](https://img.shields.io/badge/Next.js-16_(Turbopack)-black?logo=next.js&logoColor=white)](https://nextjs.org)
+[![LangGraph](https://img.shields.io/badge/Agent-LangGraph_StateGraph-1C3C3C)](https://langchain-ai.github.io/langgraph/)
+[![SQLite](https://img.shields.io/badge/Database-SQLite_(Zero--Config)-003B57?logo=sqlite&logoColor=white)](https://sqlite.org)
 
-<div dir="rtl">
-
-نظام متكامل لإدارة السندات التجارية العربية باستخدام الذكاء الاصطناعي. يقرأ السندات من الصور تلقائياً، يحللها، ويُرسل تذكيرات مخصصة للعملاء عبر البريد الإلكتروني.
-
-</div>
+🇸🇦 **[اضغط هنا لقراءة التوثيق باللغة العربية (README in Arabic)](README.ar.md)**
 
 ---
 
-## 🏗️ Project Architecture
+## Overview
 
-```
-[Bond Image]
-     │
-     ▼
- OCR (Gemini 2.5 Flash)          ← extracts Arabic JSON from bond photos
-     │
-     ▼
- FastAPI  /api/bonds/upload       ← receives & validates the JSON
-     │
-     ▼
- Supabase PostgreSQL              ← stores clients, bonds, agent logs
-     │
-     ▼ (daily at 08:00 via cron or manually via UI)
- LangGraph AI Agent (Gemini)      ← reads DB → analyzes risk → acts
-     │
-     ├── analyze_risk()           → updates risk scores per client
-     ├── send_reminder()          → sends personalized emails via Resend
-     └── generate_report()        → daily summary for management
+Tahseel is an open-source, production-grade financial automation system tailored for Arabic commercial instruments, promissory notes (*Sanad Li-Amr*), and invoice management. 
+
+Combining **Multi-Modal Vision AI** with a **LangGraph StateGraph Engine**, Tahseel ingests financial papers, evaluates collection risks, executes configurable escalation policies, and communicates with debtors across verified channels (WhatsApp & Email).
+
+---
+
+## Key Features
+
+1. **Arabic Financial OCR (Multi-Modal Vision)**
+   - Extracts structured financial entities from mobile photos and scanned PDFs of Arabic commercial promissory notes.
+   - Normalizes Arabic-Indic digits (٠-٩) and Hijri/Gregorian date formats.
+   - Calculates real-time extraction confidence scores.
+
+2. **Autonomous Decision Agent (LangGraph StateGraph)**
+   - 4-Node cyclic financial workflow:
+     1. `assess_risks`: Evaluates delinquency buckets, debtor history, and overdue exposure.
+     2. `select_strategies`: Matches individual client agreements against customizable corporate collection policies.
+     3. `draft_and_dispatch`: Dispatches personalized notifications via WhatsApp or Email.
+     4. `generate_report`: Compiles daily portfolio executive analytics.
+
+3. **Dynamic Corporate Policy Engine**
+   - Configurable escalation thresholds (Friendly Reminder -> Formal Follow-up -> Legal Notice).
+   - Client-tier agreements (VIP Executive Courtesy vs. Strict Legal Expedited Track).
+   - Installment proposal automation.
+
+4. **Zero-Setup Local SQLite Database**
+   - Self-bootstrapping database via SQLModel.
+   - Instant developer seeding via UI or `/api/seed`.
+
+5. **Real-Time Observability**
+   - WebSocket streaming for agent trace visualization and step progression.
+   - Executive financial reports and audit logs.
+
+6. **Automated Evaluation Benchmark**
+   - 20 realistic financial scenarios in `backend/evals/`.
+   - 47 automated tests guaranteeing 100% test pass rate.
+
+---
+
+## System Architecture
+
+```text
+  [ Commercial Bond / Invoice (Image or PDF) ]
+                       │
+                       ▼
+         [ Gemini 2.5 Flash Vision OCR ]
+                       │ (Structured Extraction)
+                       ▼
+       [ FastAPI Application Core (Python 3.11) ]
+         ├── SQLite Database (SQLModel Engine)
+         ├── WebSocket Live Trace Broadcaster
+         └── Corporate Policy Engine
+                       │
+                       ▼
+         [ LangGraph StateGraph Agent ]
+         ├── Node 1: Risk Assessment
+         ├── Node 2: Strategy Determination
+         ├── Node 3: Notification Dispatch (WhatsApp / Resend)
+         └── Node 4: Daily Portfolio Reporting
+                       │
+                       ▼
+      [ Next.js 16 Production Dashboard ]
+        (RTL Arabic Interface • Tailwind CSS)
 ```
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
-```
-tahseeI/
-├── .env                    # 🔐 Secret keys (never commit)
-├── .env.example            # Template for new team members
-├── requirements.txt        # All Python dependencies
-├── main.py                 # FastAPI entry point
-├── database.py             # Supabase client + DB helper functions
-├── cron_job.py             # Daily scheduler (runs agent at 08:00)
-├── test_agent.py           # Script to run agent manually
-│
-├── frontend/               # Next.js 16 UI (Dashboard, Logs, Upload)
-│
-├── ocr/
-│   ├── __init__.py
-│   └── ocr_model.py        # Gemini OCR — image → Arabic JSON
-│
-├── api/
-│   ├── __init__.py
-│   ├── bonds.py            # FastAPI router (/api/bonds, /api/bonds/ocr)
-│   └── agent.py            # FastAPI router (/api/agent/run, /api/agent/logs)
-│
-└── agent/
-    ├── __init__.py
-    ├── agent.py            # LangGraph StateGraph orchestrator
-    └── tools.py            # 4 agent tools (analyze, remind, report, query)
+```text
+tahseel/
+├── backend/
+│   ├── app/
+│   │   ├── agent/           # LangGraph StateGraph, nodes, and policy router
+│   │   ├── api/             # FastAPI routers (bonds, agent, policy, websocket)
+│   │   ├── core/            # Config, SQLite database engine, repositories
+│   │   ├── models/          # SQLModel table definitions & schemas
+│   │   ├── ocr/             # Multi-modal vision extraction & normalizers
+│   │   └── services/        # Delivery services (WhatsApp, Resend Email)
+│   ├── data/                # Local SQLite storage directory
+│   ├── evals/               # 20 financial scenarios and benchmark runner
+│   ├── tests/               # 47 automated Pytest unit and integration tests
+│   ├── Dockerfile
+│   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── app/             # Next.js App Router (Dashboard, OCR, Reports, Settings)
+│   │   ├── components/      # UI components, traces, tables, and dialogs
+│   │   ├── hooks/           # WebSocket and TanStack Query hooks
+│   │   └── lib/             # API client, bond calculations, utilities
+│   ├── Dockerfile
+│   └── package.json
+├── .github/                 # GitHub Actions CI workflow & issue templates
+├── docker-compose.yml       # One-click multi-container stack
+├── LICENSE                  # MIT License
+└── README.md                # Documentation
 ```
 
 ---
 
-## ⚙️ Setup Guide
+## Quickstart Guide
 
-### 1. Clone & Install
+### Option 1: Local Development (Recommended)
+
+#### Prerequisites
+- Python 3.11 or higher
+- Node.js 18 or higher
+- Gemini API Key ([Google AI Studio](https://aistudio.google.com/))
+
+#### 1. Backend Setup
 
 ```bash
-git clone <repo-url>
-cd tahseeI
+cd backend
+
+# Create and activate virtual environment
+python -m venv venv
+# On Windows:
+.\venv\Scripts\activate
+# On Linux/macOS:
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
+
+# Configure environment
+cp ../.env.example .env
+# Open .env and set GEMINI_API_KEY=your_key_here
+
+# Start backend server
+uvicorn app.main:app --port 8000 --reload
 ```
 
-### 2. Environment Variables
+Backend will be accessible at `http://localhost:8000`. Interactive OpenAPI documentation is available at `http://localhost:8000/docs`.
 
-Copy the example file and fill in your keys:
+#### 2. Frontend Setup
 
-```bash
-copy .env.example .env   # Windows
-cp .env.example .env     # Mac/Linux
-```
+In a new terminal:
 
-Edit `.env`:
-
-```env
-# Gemini — for OCR (image → JSON) AND LangGraph AI Agent
-GEMINI_API_KEY=AIzaSy...
-
-# Supabase — for database storage
-SUPABASE_URL=https://<your-project-id>.supabase.co
-SUPABASE_KEY=<your-service-role-key>
-
-# Resend — for sending reminder emails
-RESEND_API_KEY=re_...
-FROM_EMAIL=collections@yourcompany.com
-```
-
-> **Where to get each key:**
-> | Key | Source |
-> |-----|--------|
-> | `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) |
-> | `SUPABASE_URL` / `SUPABASE_KEY` | Supabase → Project Settings → API |
-> | `RESEND_API_KEY` | [resend.com](https://resend.com) |
-
----
-
-### 3. Supabase Database Setup
-
-Go to your Supabase project → **SQL Editor** → run this once:
-
-```sql
--- Clients table
-CREATE TABLE clients (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL,
-    phone TEXT,
-    email TEXT,
-    risk_score FLOAT DEFAULT 0.0,
-    avg_delay_days INT DEFAULT 0,
-    total_bonds INT DEFAULT 0,
-    created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Bonds table (main)
-CREATE TABLE bonds (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    bond_number TEXT UNIQUE NOT NULL,
-    bond_type TEXT NOT NULL,              -- 'صرف' or 'قبض'
-    issue_date DATE NOT NULL,
-    due_date DATE,
-    client_id UUID REFERENCES clients(id),
-    description TEXT,
-    amount NUMERIC(12,2) NOT NULL,
-    status TEXT DEFAULT 'pending',        -- pending | reminded | overdue | settled
-    days_overdue INT DEFAULT 0,
-    last_reminder_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Agent action log
-CREATE TABLE agent_actions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    bond_id UUID REFERENCES bonds(id),
-    action_type TEXT,                     -- reminder_sent | risk_updated | report_generated
-    details JSONB,
-    executed_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-> **Note:** Use the **service_role** key (not the anon key) in `SUPABASE_KEY` so the backend has full DB access.
-
----
-
-## 🚀 Running the Project
-
-### Option A — Testing Dashboard (Next.js)
-
-Open two terminals:
-
-**Terminal 1 (Backend):**
-```bash
-uvicorn main:app --reload
-```
-Runs at **http://localhost:8000**. Check API docs at `/docs`.
-
-**Terminal 2 (Frontend):**
 ```bash
 cd frontend
+
+# Install packages
 npm install
+
+# Start Next.js development server
 npm run dev
 ```
-Opens at **http://localhost:3000** — The professional web dashboard!
 
-### Option B — Daily Cron Job
+Open `http://localhost:3000` in your browser.
+
+---
+
+### Option 2: Docker Compose
+
+Run the entire stack with a single command:
 
 ```bash
-python cron_job.py
-```
-
-Runs the AI Agent every day at **08:00**.
-
----
-
-## 🧪 Testing Flow (Step by Step)
-
-```
-1. Start Backend & Frontend
-2. Go to:               http://localhost:3000
-3. Upload Bond:         Click "+ رفع سند جديد" and upload an Arabic bond/invoice.
-4. OCR & Save:          Review the extracted JSON from Gemini and click Save.
-5. Verify:              Go back to Dashboard, see the new bond and updated metrics.
-6. Trigger Agent:       Click "🤖 تشغيل الوكيل الذكي" in the top bar.
-7. Agent Logs:          Navigate to "نشاط الوكيل (Logs)" to see the explainable AI timeline (risk analysis, warnings, and emails sent).
+docker compose up --build
 ```
 
 ---
 
-## 🔄 Data Flow Detail
+## Testing & Quality Assurance
 
-```
-Bond Image (JPG/PNG)
-        │
-        │  ocr/ocr_model.py
-        │  extract_bond_from_bytes()
-        │  Gemini 2.5 Flash → JSON schema enforcement
-        ▼
-{
-  "رقم_السند": "INV-2024-001",
-  "اسم_العميل": "شركة النور",
-  "تاريخ_الاصدار": "2024-04-01",
-  "المبلغ": "45000",
-  "رقم_الهاتف": "0501234567",
-  "ايميل_العميل": "info@alnoor.com",
-  "وصف_سبب_الصرف": "توريد بضائع"
-}
-        │
-        │  database.py
-        │  upsert_client()  → finds or creates client record
-        │  save_bond_from_ocr()  → inserts bond record
-        ▼
-Supabase [clients] + [bonds] tables
-        │
-        │  (daily at 08:00)
-        │  agent/agent.py → LangGraph StateGraph
-        ▼
-Agent Loop:
-  1. analyze_and_update_risks()  → recalculates risk score (0–100) per client
-  2. get_high_risk_bonds(70)     → fetches bonds with risk > 70%
-  3. send_smart_reminder()       → sends personalized email via Resend
-  4. generate_daily_report()     → JSON summary for management
-        │
-        ▼
-[agent_actions] log in Supabase
+Tahseel includes automated test suites covering OCR normalization, repository lifecycles, escalation logic, and evaluation benchmarks:
+
+```bash
+# Run backend test suite (47 tests)
+cd backend
+pytest tests/ -v
+
+# Run frontend linting & production build
+cd frontend
+npm run lint
+npm run build
 ```
 
 ---
 
-## 🤖 AI Agent — Risk Algorithm
+## Contributing
 
-```python
-risk_score = min(
-    (days_since_issue * 2)          # base: 2 points per day, max 60
-    + (avg_delay_days * 1.5)        # history: client's past delays
-    + (10 if amount > 50000 else 0) # amount: large amounts = higher risk
-    , 100
-)
-```
-
-| Risk Score | Status | Action |
-|-----------|--------|--------|
-| 0–39% | Low | Monitor only |
-| 40–69% | Medium | Friendly reminder |
-| 70–100% | High | Formal alert + immediate action |
+Contributions, issues, and feature requests are welcome! Please check [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ---
 
-## 📦 Key Dependencies
+## License
 
-| Package | Purpose |
-|---------|---------|
-| `fastapi` + `uvicorn` | REST API server |
-| `supabase` | PostgreSQL database client |
-| `google-genai` | Gemini 2.5 Flash for OCR |
-| `langgraph` | AI Agent orchestration |
-| `langchain-google-genai`| Gemini 2.5 Flash for agent decisions |
-| `resend` | Transactional email sending |
-| `next.js` (frontend) | Production web dashboard |
-| `python-dotenv` | Environment variable loading |
-
----
-
-## 🔐 Security Notes
-
-- **Never commit `.env`** — it's in `.gitignore`
-- Use the **service_role** Supabase key server-side only
-- The `GEMINI_API_KEY` shown in `.env.example` is a placeholder — rotate your real key regularly
-- Enable **Row Level Security (RLS)** in Supabase for production
-
----
-
-## 🗺️ Roadmap
-
-- [ ] Add `due_date` auto-calculation (e.g., 30 days after `issue_date`)
-- [ ] Connect a production frontend (replacing Streamlit)
-- [ ] Add WhatsApp reminders via Twilio
-- [ ] Multi-company support with tenant isolation
-- [ ] Dashboard charts (collection rate over time)
-- [ ] PDF report export
-
----
-
-## 👥 Team Contacts
-
-| Role | Responsible |
-|------|-------------|
-| Backend / AI Agent | — |
-| OCR Pipeline | — |
-| Frontend (next phase) | — |
-| DevOps / Deployment | — |
+This project is licensed under the terms of the [MIT License](LICENSE).
