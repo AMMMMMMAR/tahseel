@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from agent.agent import run_daily_agent
+from app.agent.agent import run_daily_agent
 
 
 def job():

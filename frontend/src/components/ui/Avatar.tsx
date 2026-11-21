@@ -10,7 +10,7 @@ export function Avatar({ name, size = 34, className }: AvatarProps) {
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-[5px] bg-[var(--color-avatar)] text-white font-bold",
+        "flex shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold",
         className
       )}
       style={{ width: size, height: size, fontSize: Math.round(size * 0.42) }}
@@ -19,3 +19,4 @@ export function Avatar({ name, size = 34, className }: AvatarProps) {
     </div>
   );
 }
+

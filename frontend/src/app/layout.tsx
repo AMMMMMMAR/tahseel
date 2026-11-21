@@ -12,9 +12,9 @@ const ibmPlexArabic = IBM_Plex_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "تحصيل · منصّة إدارة التحصيل الذكية",
+  title: "تحصيل · نظام أتمتة وإدارة التحصيل المالي",
   description:
-    "منصّة Tahseel لإدارة ومتابعة تحصيل السندات والفواتير عبر الذكاء الاصطناعي التوليدي.",
+    "منظومة Tahseel لإدارة ومتابعة تحصيل الديون والالتزامات المالية وفق سياسات ديناميكية ونماذج تدقيق ذكية.",
 };
 
 export default function RootLayout({

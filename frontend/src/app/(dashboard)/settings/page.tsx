@@ -7,22 +7,27 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { useHealth } from "@/hooks/useBonds";
 import { GithubIcon } from "@/components/icons/GithubIcon";
+import { ArchitectureModal } from "@/components/modals/ArchitectureModal";
 import { api } from "@/lib/api";
 import { CollectionPolicy } from "@/lib/types";
 import {
   CheckCircle2,
   Clock,
+  Database,
   Layers,
+  Mail,
   MessageSquare,
   RotateCcw,
+  Send,
   ShieldAlert,
-  ShieldCheck,
   Sliders,
+  Smartphone,
   Terminal,
 } from "lucide-react";
 
 export default function SettingsPage() {
   const queryClient = useQueryClient();
+  const [isArchOpen, setIsArchOpen] = useState(false);
   const { data: health, isLoading: isHealthLoading, isError: isHealthError } = useHealth();
 
   // Fetch Company Collection Policy
@@ -73,14 +78,22 @@ export default function SettingsPage() {
     },
   });
 
+  // Mutation to seed demo dataset
+  const seedMutation = useMutation({
+    mutationFn: () => api.seedDemoData(),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries();
+      setToastMessage(res.message || "تم شحن البيانات التجريبية بنجاح");
+      setTimeout(() => setToastMessage(null), 4000);
+    },
+  });
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     updateMutation.mutate(form);
   };
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-  const userName = process.env.NEXT_PUBLIC_USER_NAME || "عمر عبدالله";
-  const userRole = process.env.NEXT_PUBLIC_USER_ROLE || "مدير التحصيل";
 
   return (
     <>
@@ -110,7 +123,7 @@ export default function SettingsPage() {
                   محرك سياسات التحصيل وقواعد التصعيد للشركة
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  يقرأ الوكيل الذكي (LangGraph Agent) هذه القواعد ديناميكياً لتحديد توقيت ونبرة التنبيهات
+                  يعتمد نظام التحصيل الآلي (LangGraph Engine) هذه القواعد ديناميكياً لتحديد توقيت ونبرة التنبيهات
                 </p>
               </div>
             </div>
@@ -341,25 +354,66 @@ export default function SettingsPage() {
           </form>
         </Card>
 
-        {/* Existing System & Open Source Meta */}
-        <div className="grid gap-5 lg:grid-cols-2">
-          {/* Company & Profile Info */}
-          <Card className="flex flex-col gap-3 p-5 text-start">
-            <div className="flex items-center gap-2 mb-2">
+        {/* Direct Channels & Integrations (Full Width) */}
+        <Card className="flex flex-col gap-4 p-5 text-start border-emerald-500/20 bg-slate-900/40">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2">
               <span className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400">
-                <ShieldCheck size={18} />
+                <Send size={18} />
               </span>
-              <h2 className="text-sm font-bold text-white">
-                بيانات الحساب والجهة
-              </h2>
+              <div>
+                <h2 className="text-sm font-bold text-white">
+                  قنوات الإرسال المباشر والربط البرمجي (Delivery Channels & Integrations)
+                </h2>
+                <p className="text-xs text-slate-400">
+                  ربط وتفعيل إرسال الرسائل الحقيقية للمدينين عبر البريد الإلكتروني وواتساب
+                </p>
+              </div>
             </div>
-            <Row label="الجهة التجارية" value={form.company_name || "شركة الأمل للتجارة"} />
-            <Row label="مسؤول التحصيل" value={`${userName} · ${userRole}`} />
-            <p className="mt-2 text-xs text-slate-500">
-              يتم حفظ سياسات الشركة مباشرة في قاعدة البيانات المحلية SQLite لتفعيلها الفوري.
-            </p>
-          </Card>
+            <Badge tone="success" className="px-2.5 py-1 text-xs">
+              جاهز للربط الحي
+            </Badge>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            {/* Email Channel */}
+            <div className="p-4 rounded-xl border border-slate-800 bg-slate-950/60 flex flex-col gap-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Mail size={16} className="text-sky-400" />
+                  <span className="text-xs font-bold text-white">قناة البريد الإلكتروني (Resend / SMTP)</span>
+                </div>
+                <Badge tone="neutral" className="text-[10px]">RESEND_API_KEY</Badge>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                يقوم الوكيل بإرسال خطابات المطالبات والتذكيرات الرسمية إلى بريد المدين مباشرة عبر خدمة Resend.
+              </p>
+              <div className="bg-slate-900 p-2 rounded-lg font-mono text-[10px] text-slate-300 border border-slate-800/80">
+                <code>RESEND_API_KEY=re_...<br />FROM_EMAIL=billing@yourcompany.com</code>
+              </div>
+            </div>
+
+            {/* WhatsApp Channel */}
+            <div className="p-4 rounded-xl border border-slate-800 bg-slate-950/60 flex flex-col gap-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Smartphone size={16} className="text-emerald-400" />
+                  <span className="text-xs font-bold text-white">قناة واتساب الرسمية (WhatsApp Business / Twilio)</span>
+                </div>
+                <Badge tone="neutral" className="text-[10px]">TWILIO_AUTH_TOKEN</Badge>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                إرسال التنبيهات الودية والإنذارات الفورية كرسائل واتساب رسمية وموثقة إلى أرقام جوالات المدينين.
+              </p>
+              <div className="bg-slate-900 p-2 rounded-lg font-mono text-[10px] text-slate-300 border border-slate-800/80">
+                <code>WHATSAPP_PROVIDER=twilio<br />TWILIO_WHATSAPP_NUMBER=whatsapp:+966...</code>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* System & Architecture Info */}
+        <div className="grid gap-5 lg:grid-cols-2">
           {/* Server Health */}
           <Card className="flex flex-col gap-3 p-5 text-start">
             <div className="flex items-center gap-2 mb-2">
@@ -386,8 +440,8 @@ export default function SettingsPage() {
             <Row label="معرّف الخدمة" value={health?.service ?? "Tahseel API"} mono />
           </Card>
 
-          {/* Open Source Project Details (Full width) */}
-          <Card className="lg:col-span-2 flex flex-col gap-3 p-5 text-start">
+          {/* Open Source Project Details */}
+          <Card className="flex flex-col gap-3 p-5 text-start">
             <div className="flex items-center gap-2 mb-2">
               <span className="p-1.5 rounded-lg bg-purple-500/10 text-purple-400">
                 <GithubIcon className="size-4.5" />
@@ -398,11 +452,39 @@ export default function SettingsPage() {
             </div>
             <Row label="المستودع الرئيسي" value="github.com/AMMMMMMAR/tahseel" mono />
             <Row label="الترخيص البرمجي" value="MIT License (مفتوح المصدر بالكامل)" />
-            <Row label="معمارية الوكيل" value="LangGraph StateGraph + Dynamic Policy Engine" mono />
+            <Row
+              label="معمارية المحرك"
+              value={
+                <span className="flex items-center gap-2 font-mono">
+                  <span>LangGraph + Policy Engine</span>
+                  <button
+                    type="button"
+                    onClick={() => setIsArchOpen(true)}
+                    className="text-[11px] text-emerald-400 hover:text-emerald-300 underline font-sans"
+                  >
+                    (عرض البنية)
+                  </button>
+                </span>
+              }
+            />
             <Row label="قاعدة البيانات" value="SQLite (محلية وسريعة بدون إعدادات خارجية)" />
+            <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between gap-3">
+              <span className="text-xs text-slate-400">بيانات تجريبية للمطورين</span>
+              <button
+                type="button"
+                onClick={() => seedMutation.mutate()}
+                disabled={seedMutation.isPending}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white transition disabled:opacity-50"
+              >
+                <Database size={13} className={seedMutation.isPending ? "animate-spin" : ""} />
+                <span>{seedMutation.isPending ? "جاري الشحن…" : "شحن بيانات تجريبية (Seed Demo Data)"}</span>
+              </button>
+            </div>
           </Card>
         </div>
       </div>
+
+      <ArchitectureModal isOpen={isArchOpen} onClose={() => setIsArchOpen(false)} />
     </>
   );
 }

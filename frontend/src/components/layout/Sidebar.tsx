@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   Activity,
+  BarChart3,
   FileText,
   LayoutDashboard,
   Settings,
@@ -22,6 +23,7 @@ const navItems: NavItem[] = [
   { href: "/", label: "لوحة المتابعة", icon: LayoutDashboard },
   { href: "/bonds", label: "السندات والفواتير", icon: FileText },
   { href: "/customers", label: "سجل العملاء", icon: Users },
+  { href: "/reports", label: "التقارير المالية", icon: BarChart3 },
   { href: "/upload", label: "فحص سند جديد (OCR)", icon: UploadCloud },
   { href: "/agent-logs", label: "سجل القرارات", icon: Activity },
   { href: "/settings", label: "الإعدادات", icon: Settings },
@@ -29,10 +31,6 @@ const navItems: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const company =
-    process.env.NEXT_PUBLIC_COMPANY_NAME || "شركة الأمل للتجارة";
-  const userName = process.env.NEXT_PUBLIC_USER_NAME || "عمر عبدالله";
-  const userRole = process.env.NEXT_PUBLIC_USER_ROLE || "مدير التحصيل";
 
   return (
     <aside className="hidden md:flex h-screen w-64 shrink-0 flex-col justify-between border-l border-slate-800/80 bg-slate-950/70 backdrop-blur-xl px-4 py-6 sticky top-0">
@@ -47,7 +45,7 @@ export function Sidebar() {
               تحصيل
             </span>
             <span className="text-[11px] text-slate-400">
-              إدارة التحصيل الذكية
+              منظومة تحصيل المالية
             </span>
           </div>
         </div>
@@ -86,19 +84,13 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* User Footer Profile */}
-      <div className="flex items-center gap-3 rounded-xl bg-slate-900/50 border border-slate-800/60 p-3">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
-          {userName.slice(0, 2)}
+      {/* System Status Footer */}
+      <div className="flex items-center justify-between rounded-xl bg-slate-900/40 border border-slate-800/60 px-3.5 py-2.5 text-[11px] text-slate-400">
+        <div className="flex items-center gap-2">
+          <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="font-medium text-slate-300">النظام المحلي</span>
         </div>
-        <div className="flex flex-col min-w-0 text-start">
-          <p className="truncate text-xs font-semibold text-slate-200">
-            {userName}
-          </p>
-          <p className="truncate text-[11px] text-slate-500">
-            {company}
-          </p>
-        </div>
+        <span className="font-mono text-[10px] text-slate-500">v1.0.0</span>
       </div>
     </aside>
   );

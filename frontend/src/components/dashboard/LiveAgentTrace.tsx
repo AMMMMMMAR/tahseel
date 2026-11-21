@@ -6,14 +6,13 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import {
   Activity,
-  Bot,
   CheckCircle2,
+  Cpu,
   Layers,
+  Play,
   Radio,
   Send,
-  Sparkles,
   Trash2,
-  Zap,
 } from "lucide-react";
 import type { AgentTraceEvent, WebSocketStatus } from "@/hooks/useAgentWebSocket";
 
@@ -62,12 +61,12 @@ export function LiveAgentTrace({
       <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-slate-800/80">
         <div className="flex items-center gap-3.5">
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-            <Sparkles size={20} />
+            <Activity size={20} />
           </div>
           <div>
             <div className="flex items-center gap-2.5">
               <h3 className="text-base font-bold text-white tracking-tight">
-                نشاط التحصيل الذاتي
+                مركز المتابعة والتدقيق الآلي
               </h3>
               <Badge
                 tone={
@@ -127,8 +126,8 @@ export function LiveAgentTrace({
               </>
             ) : (
               <>
-                <Zap size={14} className="ml-1.5" />
-                بدء دورة التحصيل الذكي
+                <Play size={14} className="ml-1.5 fill-current" />
+                تشغيل دورة المتابعة الآلية
               </>
             )}
           </Button>
@@ -175,13 +174,13 @@ export function LiveAgentTrace({
         {events.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-center text-slate-500">
             <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mb-3 text-slate-400">
-              <Bot size={22} />
+              <Cpu size={22} />
             </div>
             <p className="text-sm font-medium text-slate-300">
-              في انتظار بدء دورة التحصيل الذاتية
+              في انتظار تشغيل دورة المتابعة الآلية
             </p>
             <p className="text-xs text-slate-500 mt-1 max-w-sm">
-              اضغط على زر &ldquo;بدء دورة التحصيل الذكي&rdquo; لمشاهدة تحليل المخاطر وإرسال التنبيهات في الوقت الفعلي.
+              اضغط على زر &ldquo;تشغيل دورة المتابعة الآلية&rdquo; لبدء تحليل الالتزامات وبث مراحل المعالجة في الوقت الفعلي.
             </p>
           </div>
         ) : (

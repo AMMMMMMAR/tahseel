@@ -280,9 +280,9 @@ export default function CustomersPage() {
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { key: "standard", label: "قياسي (افتراضي)" },
-                    { key: "vip", label: "VIP (تذكير ودي دائماً ⭐)" },
-                    { key: "strict", label: "صارم (تصعيد مبكر ⚡)" },
+                    { key: "standard", label: "قياسي (المعاملة الافتراضية)" },
+                    { key: "vip", label: "كبار العملاء (VIP - تواصل تنفيذي)" },
+                    { key: "strict", label: "تحصيل صارم (متابعة قانونية حازمة)" },
                   ].map((t) => (
                     <button
                       key={t.key}

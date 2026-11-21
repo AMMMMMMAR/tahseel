@@ -10,13 +10,12 @@ import { formatDateAr, formatNumberAr, cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import {
   Activity,
-  Bot,
+  CheckCircle2,
   Clock,
+  Cpu,
   FileText,
   Mail,
   ShieldAlert,
-  Sparkles,
-  Zap,
 } from "lucide-react";
 
 export default function AgentLogsPage() {
@@ -29,7 +28,7 @@ export default function AgentLogsPage() {
     refetchInterval: 30000,
   });
 
-  const logs = data?.logs ?? [];
+  const logs = useMemo(() => data?.logs ?? [], [data?.logs]);
 
   // Metrics
   const metrics = useMemo(() => {
@@ -83,7 +82,7 @@ export default function AgentLogsPage() {
   return (
     <>
       <PageHeader
-        title="سجل قرارات وإجراءات الوكيل الذكي"
+        title="سجل إجراءات وقرارات المتابعة الآلية"
         subtitle="سجل تدقيق كامل لكافة القرارات والرسائل التلقائية المعتمدة من نظام التحصيل"
         action={
           <Badge tone="success" pill>
@@ -121,7 +120,7 @@ export default function AgentLogsPage() {
             <p className="text-2xl font-bold text-emerald-400 tabular mt-1">{formatNumberAr(metrics.risks + metrics.reports)}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
-            <Zap size={18} />
+            <CheckCircle2 size={18} />
           </div>
         </Card>
       </div>
@@ -189,7 +188,7 @@ export default function AgentLogsPage() {
             let description = "";
             let badgeText = "";
             let badgeTone: "brand" | "danger" | "success" | "warning" | "info" = "info";
-            let icon = <Bot size={20} />;
+            let icon = <Cpu size={20} />;
             let iconColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
 
             if (log.action_type === "reminder_sent" || log.action_type === "reminder_simulated") {
@@ -203,7 +202,7 @@ export default function AgentLogsPage() {
               title = `${label} — ${clientName}`;
               description =
                 (log.details?.summary as string) ||
-                `قام الوكيل الذكي بإرسال ${label} بخصوص السند ${bondNum} بمبلغ ${amount} ر.س. (تأخير ${daysOverdue} يوم).`;
+                `تم إرسال ${label} آلياً بخصوص السند ${bondNum} بمبلغ ${amount} ر.س. (تأخير ${daysOverdue} يوم).`;
               badgeText = label;
               badgeTone = daysOverdue > 60 ? "danger" : daysOverdue > 14 ? "warning" : "info";
               icon = <Mail size={20} />;
@@ -242,7 +241,7 @@ export default function AgentLogsPage() {
               iconColor = "text-teal-400 bg-teal-500/10 border-teal-500/20";
             } else {
               title = `إجراء في النظام (${log.action_type})`;
-              description = (log.details?.message as string) || (log.details?.summary as string) || "تم تنفيذ الإجراء بنجاح بواسطة الوكيل الذكي.";
+              description = (log.details?.message as string) || (log.details?.summary as string) || "تم تنفيذ الإجراء بنجاح وفق السياسة المعتمدة.";
               badgeText = "إجراء معتمد";
               badgeTone = "info";
             }
@@ -277,7 +276,7 @@ export default function AgentLogsPage() {
                         <span className="tabular">{time} — {dateStr}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Zap size={13} className="text-emerald-400" />
+                        <CheckCircle2 size={13} className="text-emerald-400" />
                         <span>إجراء آلي معتمد</span>
                       </div>
                     </div>

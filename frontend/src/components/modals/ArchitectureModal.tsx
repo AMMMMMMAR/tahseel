@@ -4,18 +4,12 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { GithubIcon } from "@/components/icons/GithubIcon";
 import {
-  Activity,
-  Bot,
-  CheckCircle2,
   Cpu,
   Eye,
-  FileCheck2,
   GitBranch,
-  Layers,
   MessageSquare,
-  Sparkles,
+  Radio,
   X,
-  Zap,
 } from "lucide-react";
 
 interface ArchitectureModalProps {
@@ -46,11 +40,11 @@ export function ArchitectureModal({ isOpen, onClose }: ArchitectureModalProps) {
               <Cpu size={20} />
             </span>
             <h2 className="text-xl font-bold text-white tracking-tight">
-              معمارية نظام تحصيل الذكي (System Architecture)
+              معمارية نظام تحصيل المالي (System Architecture)
             </h2>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            نظام مفتوح المصدر لإدارة التحصيل الذاتي المبني على Multi-Modal AI و LangGraph StateGraph
+            نظام مفتوح المصدر لأتمتة دورة التحصيل المالي المبني على محرك الرؤية الحاسوبية ومعمارية LangGraph
           </p>
         </div>
 
@@ -71,32 +65,32 @@ export function ArchitectureModal({ isOpen, onClose }: ArchitectureModalProps) {
           <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-4 text-start flex flex-col gap-2">
             <div className="flex items-center gap-2 text-emerald-400">
               <GitBranch size={18} />
-              <h3 className="text-sm font-bold text-white">٢. وكيل اتخاذ القرار (LangGraph)</h3>
+              <h3 className="text-sm font-bold text-white">٢. محرك اتخاذ القرار (LangGraph)</h3>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
               رسم بياني حركي للحالات (<span className="text-emerald-300 font-mono">StateGraph</span>) مكوّن من 4 مراحل متسلسلة: تقييم المخاطر ← اختيار الإجراء ← إرسال التنبيه ← إصدار التقرير.
             </p>
           </div>
 
-          {/* Pillar 3: WhatsApp Simulator */}
+          {/* Pillar 3: Delivery Channels */}
           <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-4 text-start flex flex-col gap-2">
             <div className="flex items-center gap-2 text-teal-400">
               <MessageSquare size={18} />
-              <h3 className="text-sm font-bold text-white">٣. التواصل التفاعلي (واتساب)</h3>
+              <h3 className="text-sm font-bold text-white">٣. قنوات الإشعار المباشرة (WhatsApp & Email)</h3>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
-              محاكي هاتف ذكي مدمج للتواصل مع المدين برسائل مخصصة حسب مستوى التأخير مع خيارات تفاعلية فورية (سداد / جدولة / نزاع).
+              توليد وإرسال خطابات المطالبات والتذكيرات الرسمية عبر قنوات التواصل المباشرة (WhatsApp Business و Resend) وفق سلّم التصعيد المعتمد.
             </p>
           </div>
 
           {/* Pillar 4: Live WebSocket Tracing */}
           <div className="rounded-xl bg-slate-950/60 border border-slate-800 p-4 text-start flex flex-col gap-2">
             <div className="flex items-center gap-2 text-amber-400">
-              <Zap size={18} />
-              <h3 className="text-sm font-bold text-white">٤. بث القرارات المباشر (WebSockets)</h3>
+              <Radio size={18} />
+              <h3 className="text-sm font-bold text-white">٤. بث ومراقبة الأحداث المباشرة (WebSockets)</h3>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
-              بث حي في الوقت الفعلي لكل خطوة تفكير وإجراء يتخذه الوكيل، مما يسمح للمشرف بمتابعة دورة التحصيل لحظة بلحظة.
+              بث حي في الوقت الفعلي لمراحل دورة التحصيل وتحديث شاشات الإشراف لحظة بلحظة.
             </p>
           </div>
         </div>

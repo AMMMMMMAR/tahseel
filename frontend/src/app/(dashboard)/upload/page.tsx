@@ -14,8 +14,8 @@ import {
   FileCheck2,
   FileText,
   HelpCircle,
+  Loader2,
   RotateCcw,
-  Sparkles,
   UploadCloud,
   ZoomIn,
 } from "lucide-react";
@@ -71,7 +71,7 @@ export default function UploadPage() {
       toast({
         tone: "success",
         title: "تمّ استخراج بيانات السند بدقة عالية",
-        description: `نسبة الثقة: ${score}% عبر نموذج Gemini 2.5 Flash Multi-Modal.`,
+        description: `نسبة دقة الاستخراج: ${score}% عبر محرك القراءة الضوئية OCR.`,
       });
     },
     onError: (err: ApiError) => {
@@ -177,7 +177,7 @@ export default function UploadPage() {
 
     ctx.font = "italic 16px Cairo, sans-serif";
     ctx.fillStyle = "#64748b";
-    ctx.fillText("سند تنفيذي معتمد — منصة تحصيل الذكية", 400, 900);
+    ctx.fillText("سند لأمر تنفيذي — منصة تحصيل المالية", 400, 900);
 
     canvas.toBlob((blob) => {
       if (blob) {
@@ -209,7 +209,7 @@ export default function UploadPage() {
   return (
     <>
       <PageHeader
-        title="فحص ومراجعة السندات الذكية"
+        title="فحص واستخراج بيانات السندات (OCR)"
         subtitle="ارفع صورة أو ملف PDF لأي سند تجاري ليتم استخراج البيانات والتحقق من صحتها آلياً"
         action={
           <div className="flex items-center gap-2">
@@ -329,7 +329,7 @@ export default function UploadPage() {
             >
               {uploadMutation.isPending ? (
                 <>
-                  <Sparkles size={15} className="ml-1.5 animate-spin" />
+                  <Loader2 size={15} className="ml-1.5 animate-spin" />
                   جاري الاستخراج الآلي…
                 </>
               ) : (
@@ -374,7 +374,7 @@ export default function UploadPage() {
 
             {confidence !== null ? (
               <Badge tone="success" pill>
-                <Sparkles size={12} className="ml-1" />
+                <CheckCircle2 size={12} className="ml-1" />
                 نسبة الثقة: {confidence}%
               </Badge>
             ) : (
